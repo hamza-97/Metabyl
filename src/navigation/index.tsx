@@ -16,6 +16,7 @@ import { DietaryPreferencesScreen } from '../screens/questionnaire/DietaryPrefer
 import { CookingSkillScreen } from '../screens/questionnaire/CookingSkillScreen';
 import { ShoppingPreferencesScreen } from '../screens/questionnaire/ShoppingPreferencesScreen';
 import { FinalPersonalizationScreen } from '../screens/questionnaire/FinalPersonalizationScreen';
+import { FinalPersonalizationTwoScreen } from '../screens/questionnaire/FinalPersonalizationTwoScreen';
 import PaywallScreen from '../screens/onboarding/PaywallScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
@@ -33,6 +34,7 @@ export type RootStackParamList = {
   CookingSkillScreen: undefined;
   ShoppingPreferencesScreen: undefined;
   FinalPersonalizationScreen: undefined;
+  FinalPersonalizationTwoScreen: undefined;
   PaywallScreen: undefined;
   Login: undefined;
   Signup: undefined;
@@ -61,6 +63,7 @@ const Navigation = () => {
               <Stack.Screen name="CookingSkillScreen" component={CookingSkillScreen} />
               <Stack.Screen name="ShoppingPreferencesScreen" component={ShoppingPreferencesScreen} />
               <Stack.Screen name="FinalPersonalizationScreen" component={FinalPersonalizationScreen} />
+              <Stack.Screen name="FinalPersonalizationTwoScreen" component={FinalPersonalizationTwoScreen} />
               <Stack.Screen name="PaywallScreen" component={PaywallScreen} />
             </>
           ) : (

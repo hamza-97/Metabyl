@@ -73,10 +73,8 @@ export const FinalPersonalizationScreen: React.FC = () => {
     }
   };
 
-  const handleComplete = () => {
-    // Here you would typically save the responses to your backend
-    console.log('Questionnaire completed:', responses);
-    navigation.navigate('PaywallScreen');
+  const handleContinue = () => {
+    navigation.navigate('FinalPersonalizationTwoScreen');
   };
 
   return (
@@ -192,10 +190,10 @@ export const FinalPersonalizationScreen: React.FC = () => {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.completeButton}
-          onPress={handleComplete}
+          style={styles.continueButton}
+          onPress={handleContinue}
         >
-          <Text style={styles.completeButtonText}>Complete Setup</Text>
+          <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -303,13 +301,13 @@ const styles = StyleSheet.create({
   footer: {
     paddingVertical: 20,
   },
-  completeButton: {
+  continueButton: {
     backgroundColor: '#5DB075',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
-  completeButtonText: {
+  continueButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
