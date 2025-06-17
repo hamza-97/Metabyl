@@ -95,8 +95,8 @@ const OnboardingScreen = () => {
         animated: true,
       });
     } else {
-      // Navigate to dietary preferences screen
-      navigation.navigate('DietaryPreferences');
+      // Navigate to questionnaire screen
+      navigation.navigate('Questionnaire');
     }
   };
 

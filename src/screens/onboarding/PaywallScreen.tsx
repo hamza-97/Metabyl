@@ -4,8 +4,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  StatusBar,
+  ImageBackground,
   ScrollView,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -19,37 +20,27 @@ type SubscriptionPlan = {
   name: string;
   price: string;
   period: string;
-  savings?: string;
   isPopular?: boolean;
 };
 
 const subscriptionPlans: SubscriptionPlan[] = [
   {
+    id: 'weekly',
+    name: 'Weekly',
+    price: '$2.99',
+    period: 'per week',
+  },
+  {
     id: 'monthly',
     name: 'Monthly',
     price: '$9.99',
     period: 'per month',
-  },
-  {
-    id: 'yearly',
-    name: 'Yearly',
-    price: '$79.99',
-    period: 'per year',
-    savings: 'Save 33%',
     isPopular: true,
-  },
-  {
-    id: 'lifetime',
-    name: 'Lifetime',
-    price: '$199.99',
-    period: 'one-time payment',
-    savings: 'Best value',
   },
 ];
 
 const PaywallScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const isDarkMode = useColorScheme() === 'dark';
 
   // Get state and actions from store
   const subscriptionPlan = useUserStore((state) => state.subscriptionPlan);
@@ -57,266 +48,312 @@ const PaywallScreen = () => {
   const setPremiumStatus = useUserStore((state) => state.setPremiumStatus);
   const setHasCompletedOnboarding = useUserStore((state) => state.setHasCompletedOnboarding);
 
+  // Set default selection to monthly
+  React.useEffect(() => {
+    if (!subscriptionPlan) {
+      setSubscriptionPlan('monthly');
+    }
+  }, [subscriptionPlan, setSubscriptionPlan]);
+
   const handleSubscribe = () => {
-    // Process subscription
     setPremiumStatus(true);
     setHasCompletedOnboarding(true);
-    navigation.navigate('MainApp');
+    // navigation.navigate('MainApp');
   };
 
   const handleContinueFree = () => {
-    // Skip subscription and continue with limited features
     setPremiumStatus(false);
     setHasCompletedOnboarding(true);
-    navigation.navigate('MainApp');
+    // navigation.navigate('MainApp');
   };
 
   const features = [
-    'Unlimited AI-powered meal plans',
-    'Personalized recipe recommendations',
-    'Automatic shopping lists',
-    'Nutritional information',
-    'Save favorite recipes',
+    'Free trial for new users',
+    'All meal plans and features',
+    'Cancel anytime from the app',
   ];
 
   return (
-    <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={[styles.title, isDarkMode && styles.textLight]}>
-            Unlock Full Access
-          </Text>
-          <Text style={[styles.subtitle, isDarkMode && styles.textLightSecondary]}>
-            Get personalized meal plans tailored to your preferences
-          </Text>
-        </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <View style={styles.overlay} />
+      <ImageBackground
+        source={require('../../../assets/img/paywall.png')}
+        style={styles.backgroundImage}
+      >
 
-        <View style={styles.featureSection}>
-          {features.map((feature, index) => (
-            <View key={index} style={styles.featureRow}>
-              <Icon name="check-circle" size={20} color="#5DB075" style={styles.featureIcon} />
-              <Text style={[styles.featureText, isDarkMode && styles.textLight]}>{feature}</Text>
+        
+        <ScrollView contentContainerStyle={styles.safeArea}>
+          {/* Close Button */}
+          <TouchableOpacity style={styles.closeButton} onPress={handleContinueFree}>
+            <Icon name="close" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          {/* Content Container */}
+          <View style={styles.contentContainer}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Enjoy full access</Text>
+              <Text style={styles.subtitle}>with Metabyl</Text>
             </View>
-          ))}
-        </View>
 
-        <View style={styles.plansSection}>
-          {subscriptionPlans.map((plan) => (
-            <TouchableOpacity
-              key={plan.id}
-              style={[
-                styles.planCard,
-                isDarkMode && styles.planCardDark,
-                subscriptionPlan === plan.id && styles.selectedPlan,
-                plan.isPopular && styles.popularPlan,
-              ]}
-              onPress={() => setSubscriptionPlan(plan.id)}
-            >
-              {plan.isPopular && (
-                <View style={styles.popularBadge}>
-                  <Text style={styles.popularBadgeText}>Most Popular</Text>
+            {/* Features */}
+            <View style={styles.featuresContainer}>
+              {features.map((feature, index) => (
+                <View key={index} style={styles.featureRow}>
+                  <Icon name="check" size={24} color="white" style={styles.checkIcon} />
+                  <Text style={styles.featureText}>{feature}</Text>
                 </View>
-              )}
-              <View style={styles.planInfo}>
-                <Text style={[styles.planName, isDarkMode && styles.textLight]}>{plan.name}</Text>
-                <View style={styles.priceContainer}>
-                  <Text style={[styles.planPrice, isDarkMode && styles.textLight]}>
-                    {plan.price}
-                  </Text>
-                  <Text style={[styles.planPeriod, isDarkMode && styles.textLightSecondary]}>
-                    {plan.period}
-                  </Text>
-                </View>
-                {plan.savings && (
-                  <View style={styles.savingsBadge}>
-                    <Text style={styles.savingsText}>{plan.savings}</Text>
+              ))}
+            </View>
+
+            {/* Subscription Plans */}
+            <View style={styles.plansContainer}>
+              {subscriptionPlans.map((plan) => (
+                <TouchableOpacity
+                  key={plan.id}
+                  style={[
+                    styles.planButton,
+                    subscriptionPlan === plan.id && styles.selectedPlan,
+                  ]}
+                  onPress={() => setSubscriptionPlan(plan.id)}
+                >
+                  <View style={styles.planContent}>
+                    <View style={styles.planInfo}>
+                      <Text style={styles.planName}>{plan.name}</Text>
+                      <Text style={styles.planPrice}>
+                        {plan.price} <Text style={styles.planPeriod}>{plan.period}</Text>
+                      </Text>
+                    </View>
+                    <View style={[
+                      styles.radioButton,
+                      subscriptionPlan === plan.id && styles.radioButtonSelected
+                    ]}>
+                      {subscriptionPlan === plan.id && (
+                        <View style={styles.radioButtonInner} />
+                      )}
+                    </View>
                   </View>
-                )}
-              </View>
-              {subscriptionPlan === plan.id && (
-                <Icon name="check-circle" size={24} color="#5DB075" style={styles.checkIcon} />
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+                  {plan.isPopular && (
+                    <View style={styles.popularBadge}>
+                      <Text style={styles.popularText}>Most Popular</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
-          <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.freeButton} onPress={handleContinueFree}>
-          <Text style={[styles.freeButtonText, isDarkMode && styles.textLight]}>
-            Continue with limited version
-          </Text>
-        </TouchableOpacity>
-        <Text style={[styles.termsText, isDarkMode && styles.textLightSecondary]}>
-          By continuing, you agree to our Terms of Service and Privacy Policy.
-          Subscriptions will automatically renew unless canceled before the renewal date.
-        </Text>
-      </View>
-    </SafeAreaView>
+            {/* Subscribe Button */}
+            <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
+              <Text style={styles.subscribeButtonText}>Subscribe</Text>
+            </TouchableOpacity>
+
+            {/* Continue Free Button */}
+            <TouchableOpacity style={styles.continueButton} onPress={handleContinueFree}>
+              <Text style={styles.continueButtonText}>Maybe Later</Text>
+            </TouchableOpacity>
+
+            {/* Terms */}
+            <Text style={styles.termsText}>
+              3 days free, then {subscriptionPlan === 'weekly' ? '$2.99/week' : '$9.99/month'}. Cancel anytime.
+            </Text>
+          </View>
+        </ScrollView>
+      </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
-  containerDark: {
-    backgroundColor: '#121212',
-  },
-  content: {
+  backgroundImage: {
     flex: 1,
-    paddingHorizontal: 20,
+    width: '100%',
+    height: '100%',
+    
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  },
+  safeArea: {
+    flex: 1,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
   header: {
-    marginTop: 20,
     marginBottom: 30,
-    alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'left',
+    lineHeight: 40,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    paddingHorizontal: 20,
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'left',
+    lineHeight: 40,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  featureSection: {
+  featuresContainer: {
     marginBottom: 30,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
-  featureIcon: {
-    marginRight: 10,
+  checkIcon: {
+    marginRight: 12,
+    fontWeight:'bold'
   },
   featureText: {
-    fontSize: 16,
-    color: '#333333',
+    fontSize: 20,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
-  plansSection: {
-    marginBottom: 20,
+  plansContainer: {
+    marginBottom: 24,
+    flexDirection:'row',
+    justifyContent:'space-between'
   },
-  planCard: {
-    backgroundColor: '#F8F8F8',
+  planButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
     position: 'relative',
-  },
-  planCardDark: {
-    backgroundColor: '#2A2A2A',
+    width:'45%'
   },
   selectedPlan: {
-    borderWidth: 2,
-    borderColor: '#5DB075',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: '#FFFFFF',
   },
-  popularPlan: {
-    borderWidth: 2,
-    borderColor: '#5DB075',
-  },
-  popularBadge: {
-    position: 'absolute',
-    top: -10,
-    right: 10,
-    backgroundColor: '#5DB075',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 15,
-  },
-  popularBadgeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+  planContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   planInfo: {
     flex: 1,
   },
   planName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 5,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   planPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginRight: 5,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   planPeriod: {
     fontSize: 14,
-    color: '#666666',
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
-  savingsBadge: {
-    backgroundColor: '#E8F5EF',
+  radioButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioButtonSelected: {
+    backgroundColor: '#FFFFFF',
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -6,
+    right: 12,
+    backgroundColor: '#4CAF50',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    marginTop: 5,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  savingsText: {
-    color: '#5DB075',
+  popularText: {
     fontSize: 12,
-    fontWeight: 'bold',
-  },
-  checkIcon: {
-    marginLeft: 10,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   subscribeButton: {
-    backgroundColor: '#5DB075',
-    paddingVertical: 15,
-    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 8,
   },
   subscribeButtonText: {
-    color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  freeButton: {
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  freeButtonText: {
-    color: '#5DB075',
-    fontSize: 16,
     fontWeight: '600',
+    color: '#333333',
+  },
+  continueButton: {
+    paddingVertical: 4,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  continueButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   termsText: {
     fontSize: 12,
-    color: '#999999',
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
-    lineHeight: 18,
-  },
-  textLight: {
-    color: '#FFFFFF',
-  },
-  textLightSecondary: {
-    color: '#AAAAAA',
+    lineHeight: 16,
   },
 });
 

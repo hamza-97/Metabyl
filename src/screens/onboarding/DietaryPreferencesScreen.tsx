@@ -75,7 +75,7 @@ const DietaryPreferencesScreen = () => {
   const setDietaryPreference = useUserStore((state) => state.setDietaryPreference);
 
   const handleNext = () => {
-    navigation.navigate('AllergiesScreen');
+    navigation.navigate('PaywallScreen');
   };
 
   return (
