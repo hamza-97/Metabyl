@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "719360015080",
+    "project_id": "metabyl",
+    "storage_bucket": "metabyl.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719360015080:android:0409c0a89170325c4a675d",
+        "android_client_info": {
+          "package_name": "com.metabyl.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtjGWWHl12YMEPJquU8oRkai-sOKGOU4Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

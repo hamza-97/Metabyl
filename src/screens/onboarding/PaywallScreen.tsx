@@ -78,7 +78,8 @@ const PaywallScreen = () => {
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
         <View style={styles.overlay} />
       <ImageBackground
-        source={require('../../../assets/img/paywall.png')}
+        source={require('../../../assets/img/3.jpg')}
+        // source={require('../../../assets/img/paywall.png')}
         style={styles.backgroundImage}
       >
 
