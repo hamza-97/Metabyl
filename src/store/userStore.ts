@@ -7,6 +7,10 @@ interface UserState {
   name: string | null;
   email: string | null;
 
+  // Authentication
+  authMethod: 'apple' | 'google' | 'local' | null;
+  isLoggedIn: boolean;
+
   // Onboarding status
   hasCompletedOnboarding: boolean;
 
@@ -21,6 +25,8 @@ interface UserState {
   // Actions
   setName: (name: string) => void;
   setEmail: (email: string) => void;
+  setAuthMethod: (method: 'apple' | 'google' | 'local') => void;
+  setLoggedIn: (status: boolean) => void;
   setHasCompletedOnboarding: (status: boolean) => void;
   setDietaryPreference: (preference: string) => void;
   setAllergies: (allergies: string[]) => void;
@@ -36,6 +42,8 @@ export const useUserStore = create<UserState>()(
       // Initial state
       name: null,
       email: null,
+      authMethod: null,
+      isLoggedIn: false,
       hasCompletedOnboarding: false,
       dietaryPreference: null,
       allergies: [],
@@ -45,6 +53,8 @@ export const useUserStore = create<UserState>()(
       // Actions
       setName: name => set({ name }),
       setEmail: email => set({ email }),
+      setAuthMethod: method => set({ authMethod: method }),
+      setLoggedIn: status => set({ isLoggedIn: status }),
       setHasCompletedOnboarding: status =>
         set({ hasCompletedOnboarding: status }),
       setDietaryPreference: preference =>
@@ -66,6 +76,8 @@ export const useUserStore = create<UserState>()(
         set({
           name: null,
           email: null,
+          authMethod: null,
+          isLoggedIn: false,
           dietaryPreference: null,
           allergies: [],
           isPremium: false,

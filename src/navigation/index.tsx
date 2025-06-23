@@ -20,6 +20,7 @@ import { FinalPersonalizationTwoScreen } from '../screens/questionnaire/FinalPer
 import PaywallScreen from '../screens/onboarding/PaywallScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
+import AuthenticationChoiceScreen from '../screens/auth/AuthenticationChoiceScreen';
 import MainTabNavigator from './MainTabNavigator';
 
 export type RootStackParamList = {
@@ -35,6 +36,7 @@ export type RootStackParamList = {
   ShoppingPreferencesScreen: undefined;
   FinalPersonalizationScreen: undefined;
   FinalPersonalizationTwoScreen: undefined;
+  AuthChoice: undefined;
   PaywallScreen: undefined;
   Login: undefined;
   Signup: undefined;
@@ -64,6 +66,7 @@ const Navigation = () => {
               <Stack.Screen name="ShoppingPreferencesScreen" component={ShoppingPreferencesScreen} />
               <Stack.Screen name="FinalPersonalizationScreen" component={FinalPersonalizationScreen} />
               <Stack.Screen name="FinalPersonalizationTwoScreen" component={FinalPersonalizationTwoScreen} />
+              <Stack.Screen name="AuthChoice" component={AuthenticationChoiceScreen} />
               <Stack.Screen name="PaywallScreen" component={PaywallScreen} />
             </>
           ) : (

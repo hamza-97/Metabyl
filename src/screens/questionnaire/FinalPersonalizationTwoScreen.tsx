@@ -60,7 +60,7 @@ export const FinalPersonalizationTwoScreen: React.FC = () => {
   const handleComplete = () => {
     // Here you would typically save the responses to your backend
     console.log('Questionnaire completed:', responses);
-    navigation.navigate('PaywallScreen');
+    navigation.navigate('AuthChoice');
   };
 
   return (

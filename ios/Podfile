@@ -22,6 +22,10 @@ target 'Metabyl' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
+  
+  # Firebase dependencies - temporarily disabled for testing
+  # pod 'Firebase/Core', :modular_headers => true
+  # pod 'Firebase/Auth', :modular_headers => true
 
   post_install do |installer|
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202

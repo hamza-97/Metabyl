@@ -1,4 +1,4 @@
-package com.metabyl
+package com.metabyl.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
