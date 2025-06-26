@@ -6,6 +6,8 @@ import {
   useColorScheme,
   TouchableOpacity,
   ScrollView,
+  Image,
+  Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -17,6 +19,9 @@ import { useMealPlanStore } from '../../store/mealPlanStore';
 import { RootStackParamList } from '../../navigation';
 import { MainTabParamList } from '../../navigation/MainTabNavigator';
 
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width - 40; // 20px padding on each side
+
 type HomeScreenProp = NativeStackNavigationProp<RootStackParamList, 'RecipeDetail'> & 
                       BottomTabNavigationProp<MainTabParamList, 'Home'>;
 
@@ -26,7 +31,7 @@ const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenProp>();
   
   const { mealPlans, addMealPlan } = useMealPlanStore();
-
+  
   const handleMealPlanGenerated = (mealPlan: any) => {
     addMealPlan(mealPlan);
   };
@@ -38,6 +43,16 @@ const HomeScreen = () => {
   const navigateToRecipes = () => {
     navigation.navigate('Recipes');
   };
+
+  // Function to get meal type based on current time
+  const getMealTypeForCurrentTime = () => {
+    const hour = new Date().getHours();
+    if (hour < 11) return 'Breakfast';
+    if (hour < 16) return 'Lunch';
+    return 'Dinner';
+  };
+
+  const currentMealType = getMealTypeForCurrentTime();
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
@@ -68,11 +83,8 @@ const HomeScreen = () => {
 
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>
-            This Week's Plan
+            {`Today's ${currentMealType}`}
           </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
         </View>
 
         {mealPlans.length === 0 ? (
@@ -87,32 +99,90 @@ const HomeScreen = () => {
           </View>
         ) : (
           <View style={styles.mealPlansContainer}>
-            {mealPlans.slice(0, 3).map((plan, index) => (
-              <TouchableOpacity 
-                key={index} 
-                style={[styles.mealPlanCard, isDarkMode && styles.mealPlanCardDark]}
-                onPress={() => {
-                  if (plan.type === 'single' && plan.meals.length > 0) {
-                    navigateToRecipeDetail(plan.meals[0].id);
-                  }
-                }}
-              >
-                <View style={styles.mealPlanHeader}>
-                  <Text style={[styles.mealPlanTitle, isDarkMode && styles.textLight]}>
-                    {plan.type === 'single' ? plan.meals[0]?.title : '7-Day Meal Plan'}
-                  </Text>
-                  <Text style={[styles.mealPlanDate, isDarkMode && styles.textLightSecondary]}>
-                    {new Date(plan.generatedAt).toLocaleDateString()}
-                  </Text>
-                </View>
-                <Text style={[styles.mealPlanSubtitle, isDarkMode && styles.textLightSecondary]}>
-                  {plan.type === 'single' 
-                    ? `${plan.servings || 1} serving${(plan.servings || 1) > 1 ? 's' : ''}`
-                    : `21 meals for ${plan.servings || 1} people`
-                  }
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {mealPlans.slice(0, 1).map((plan, index) => {
+              // Safely extract meal data
+              const meal = plan.meals && plan.meals.length > 0 ? plan.meals[0] : null;
+              const healthScore = meal && 'healthScore' in meal ? (meal.healthScore as number) : undefined;
+              
+              return (
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.mealPlanCard}
+                  onPress={() => {
+                    if (plan.type === 'single' && meal) {
+                      navigateToRecipeDetail(meal.id);
+                    }
+                  }}
+                >
+                  {meal && meal.image ? (
+                    <Image 
+                      source={{uri: meal.image}} 
+                      style={styles.mealImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={[styles.mealImagePlaceholder, isDarkMode && styles.mealImagePlaceholderDark]}>
+                      <Icon name="food" size={40} color={isDarkMode ? '#444' : '#DDD'} />
+                    </View>
+                  )}
+                  
+                  <View style={styles.mealInfoContainer}>
+                    <View style={styles.mealTitleContainer}>
+                      <Text style={[styles.mealTitle, isDarkMode && styles.textLight]} numberOfLines={2}>
+                        {plan.type === 'single' && meal ? meal.title : '7-Day Meal Plan'}
+                      </Text>
+                      
+                      <View style={styles.mealBadge}>
+                        <Text style={styles.mealBadgeText}>{currentMealType}</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.mealMetaContainer}>
+                      <View style={styles.mealMetaItem}>
+                        <Icon name="clock-outline" size={16} color={isDarkMode ? '#AAAAAA' : '#666666'} />
+                        <Text style={[styles.mealMetaText, isDarkMode && styles.textLightSecondary]}>
+                          {meal?.readyInMinutes || '?'} mins
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.mealMetaItem}>
+                        <Icon name="account-group-outline" size={16} color={isDarkMode ? '#AAAAAA' : '#666666'} />
+                        <Text style={[styles.mealMetaText, isDarkMode && styles.textLightSecondary]}>
+                          {plan.servings || 1} {(plan.servings || 1) > 1 ? 'people' : 'person'}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    {healthScore !== undefined && (
+                      <View style={styles.healthScoreContainer}>
+                        <Text style={styles.healthScoreLabel}>Health Score:</Text>
+                        <View style={styles.healthScoreBar}>
+                          <View 
+                            style={[
+                              styles.healthScoreFill, 
+                              { 
+                                width: `${healthScore}%`,
+                                backgroundColor: healthScore >= 70 ? '#5DB075' : 
+                                                healthScore >= 40 ? '#FFD166' : '#FF6B6B'
+                              }
+                            ]} 
+                          />
+                        </View>
+                        <Text style={styles.healthScoreValue}>{healthScore}</Text>
+                      </View>
+                    )}
+                    
+                    <TouchableOpacity 
+                      style={styles.viewRecipeButton}
+                      onPress={() => meal && navigateToRecipeDetail(meal.id)}
+                    >
+                      <Text style={styles.viewRecipeButtonText}>View Recipe</Text>
+                      <Icon name="chevron-right" size={16} color="#5DB075" />
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
 
@@ -247,39 +317,112 @@ const styles = StyleSheet.create({
     color: '#AAAAAA',
   },
   mealPlansContainer: {
-    gap: 15,
     marginBottom: 30,
   },
   mealPlanCard: {
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    padding: 15,
-    borderLeftWidth: 4,
-    borderLeftColor: '#5DB075',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  mealPlanCardDark: {
+  mealImage: {
+    width: CARD_WIDTH,
+    height: 180,
+  },
+  mealImagePlaceholder: {
+    width: CARD_WIDTH,
+    height: 180,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mealImagePlaceholderDark: {
     backgroundColor: '#2A2A2A',
   },
-  mealPlanHeader: {
+  mealInfoContainer: {
+    padding: 16,
+  },
+  mealTitleContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 5,
+    marginBottom: 12,
   },
-  mealPlanTitle: {
-    fontSize: 16,
+  mealTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333333',
     flex: 1,
     marginRight: 10,
   },
-  mealPlanDate: {
-    fontSize: 12,
-    color: '#666666',
+  mealBadge: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  mealPlanSubtitle: {
+  mealBadgeText: {
+    color: '#5DB075',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  mealMetaContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  mealMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  mealMetaText: {
     fontSize: 14,
     color: '#666666',
+    marginLeft: 6,
+  },
+  healthScoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  healthScoreLabel: {
+    fontSize: 14,
+    color: '#666666',
+    marginRight: 10,
+  },
+  healthScoreBar: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  healthScoreFill: {
+    height: '100%',
+  },
+  healthScoreValue: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#666666',
+  },
+  viewRecipeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+  },
+  viewRecipeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#5DB075',
+    marginRight: 4,
   },
 });
 

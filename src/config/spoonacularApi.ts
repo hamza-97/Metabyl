@@ -8,7 +8,7 @@ interface SpoonacularConfig {
 
 export const spoonacularConfig: SpoonacularConfig = {
   baseURL: API_BASE_URL,
-  apiKey: 'abc',
+  apiKey: '',
 };
 
 // Recipe search parameters
@@ -59,6 +59,12 @@ export interface Recipe {
   instructions?: string;
   extendedIngredients?: Ingredient[];
   nutrition?: NutritionInfo;
+  healthScore?: number;
+  diets?: string[];
+  vegetarian?: boolean;
+  vegan?: boolean;
+  glutenFree?: boolean;
+  dairyFree?: boolean;
 }
 
 export interface Ingredient {
@@ -70,11 +76,25 @@ export interface Ingredient {
   image?: string;
 }
 
+export interface Nutrient {
+  name: string;
+  amount: number;
+  unit: string;
+  percentOfDailyNeeds: number;
+}
+
 export interface NutritionInfo {
   calories: number;
   protein: string;
   fat: string;
   carbohydrates: string;
+  nutrients?: {
+    fiber?: number;
+    sugar?: number;
+    sodium?: number;
+    cholesterol?: number;
+    [key: string]: number | undefined;
+  };
 }
 
 // Meal plan response types
@@ -183,7 +203,9 @@ class SpoonacularAPI {
 
   // Get recipe information by ID
   async getRecipeInformation(id: number): Promise<Recipe> {
-    return this.makeRequest<Recipe>(`/recipes/${id}/information`);
+    return this.makeRequest<Recipe>(`/recipes/${id}/information`, {
+      includeNutrition: true,
+    });
   }
 }
 

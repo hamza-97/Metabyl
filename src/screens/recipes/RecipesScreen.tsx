@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation';
-import { spoonacularAPI, Recipe } from '../../config/spoonacularApi';
+import { spoonacularAPI, Recipe, RecipeSearchParams } from '../../config/spoonacularApi';
+import { useUserStore } from '../../store/userStore';
 
 type RecipesNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RecipeDetail'>;
 
@@ -26,25 +27,87 @@ const RecipesScreen = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [error, setError] = useState<string | null>(null);
+  
+  // Get user preferences from store
+  const userPreferences = {
+    allergies: useUserStore(state => state.allergies),
+    dietaryPreference: useUserStore(state => state.dietaryPreference),
+    // Note: cookingTime is not in userStore, we'll use a default value
+  };
 
-  const filters = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Vegetarian'];
+  const filters = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Vegetarian', 'Healthy'];
 
-  useEffect(() => {
-    fetchRecipes();
-  }, []);
-
-  const fetchRecipes = async () => {
+  const fetchRecipes = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await spoonacularAPI.getRandomRecipes({ number: 10 });
-      setRecipes(response.recipes);
+      
+      // Create search parameters based on selected filter and user preferences
+      const searchParams: RecipeSearchParams = {
+        number: 10,
+      };
+      
+      // Apply dietary restrictions from user preferences
+      if (userPreferences.allergies && userPreferences.allergies.length > 0) {
+        searchParams.intolerances = userPreferences.allergies.join(',');
+      }
+      
+      // Apply filter-specific parameters
+      switch (selectedFilter) {
+        case 'Breakfast':
+          searchParams.type = 'breakfast';
+          break;
+        case 'Lunch':
+          searchParams.type = 'main course';
+          break;
+        case 'Dinner':
+          searchParams.type = 'main course';
+          break;
+        case 'Vegetarian':
+          searchParams.diet = 'vegetarian';
+          break;
+        case 'Healthy':
+          // We'll sort by health score after fetching
+          break;
+        default:
+          break;
+      }
+      
+      // Fetch recipes with search parameters
+      if (Object.keys(searchParams).length > 1) {
+        const response = await spoonacularAPI.searchRecipes(searchParams);
+        setRecipes(response.results);
+        
+        // Sort by health score if "Healthy" filter is selected
+        if (selectedFilter === 'Healthy') {
+          const sortedRecipes = [...response.results].sort(
+            (a, b) => (b.healthScore || 0) - (a.healthScore || 0)
+          );
+          setRecipes(sortedRecipes);
+        }
+      } else {
+        const response = await spoonacularAPI.getRandomRecipes({ number: 10 });
+        setRecipes(response.recipes);
+        
+        // Sort by health score if "Healthy" filter is selected
+        if (selectedFilter === 'Healthy') {
+          const sortedRecipes = [...response.recipes].sort(
+            (a, b) => (b.healthScore || 0) - (a.healthScore || 0)
+          );
+          setRecipes(sortedRecipes);
+        }
+      }
+      
       setLoading(false);
     } catch (err) {
       console.error('Failed to fetch recipes:', err);
       setError('Failed to load recipes. Please try again later.');
       setLoading(false);
     }
-  };
+  }, [selectedFilter, userPreferences.allergies]);
+
+  useEffect(() => {
+    fetchRecipes();
+  }, [fetchRecipes]);
 
   const handleRecipePress = (recipeId: number) => {
     navigation.navigate('RecipeDetail', { recipeId });
@@ -62,6 +125,27 @@ const RecipesScreen = () => {
         <Text style={[styles.recipeTitle, isDarkMode && styles.textLight]} numberOfLines={2}>
           {item.title}
         </Text>
+        
+        {/* Health score indicator */}
+        {item.healthScore && (
+          <View style={styles.healthScoreContainer}>
+            <Text style={styles.healthScoreLabel}>Health Score:</Text>
+            <View style={styles.healthScoreBar}>
+              <View 
+                style={[
+                  styles.healthScoreFill, 
+                  { 
+                    width: `${item.healthScore}%`,
+                    backgroundColor: item.healthScore >= 70 ? '#5DB075' : 
+                                     item.healthScore >= 40 ? '#FFD166' : '#FF6B6B'
+                  }
+                ]} 
+              />
+              <Text style={styles.healthScoreText}>{item.healthScore}</Text>
+            </View>
+          </View>
+        )}
+        
         <View style={styles.recipeMetaInfo}>
           <View style={styles.metaItem}>
             <Icon name="clock-outline" size={14} color={isDarkMode ? '#AAAAAA' : '#666666'} />
@@ -76,6 +160,27 @@ const RecipesScreen = () => {
             </Text>
           </View>
         </View>
+        
+        {/* Dietary tags */}
+        {(item.diets && item.diets.length > 0) || item.vegetarian || item.vegan || item.glutenFree ? (
+          <View style={styles.dietTagsContainer}>
+            {item.vegetarian && (
+              <View style={styles.dietTag}>
+                <Text style={styles.dietTagText}>Vegetarian</Text>
+              </View>
+            )}
+            {item.vegan && (
+              <View style={styles.dietTag}>
+                <Text style={styles.dietTagText}>Vegan</Text>
+              </View>
+            )}
+            {item.glutenFree && (
+              <View style={styles.dietTag}>
+                <Text style={styles.dietTagText}>Gluten-Free</Text>
+              </View>
+            )}
+          </View>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
@@ -233,9 +338,42 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 8,
   },
+  healthScoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  healthScoreLabel: {
+    fontSize: 12,
+    color: '#666666',
+    marginRight: 8,
+  },
+  healthScoreBar: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 3,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  healthScoreFill: {
+    height: '100%',
+    position: 'absolute',
+    left: 0,
+    top: 0,
+  },
+  healthScoreText: {
+    position: 'absolute',
+    right: 5,
+    top: -7,
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
   recipeMetaInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
   },
   metaItem: {
     flexDirection: 'row',
@@ -246,6 +384,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666666',
     marginLeft: 4,
+  },
+  dietTagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  dietTag: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginRight: 6,
+    marginBottom: 4,
+  },
+  dietTagText: {
+    fontSize: 10,
+    color: '#5DB075',
+    fontWeight: '600',
   },
   emptyState: {
     backgroundColor: '#F8F8F8',

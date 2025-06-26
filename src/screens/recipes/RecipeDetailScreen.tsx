@@ -17,6 +17,82 @@ import { MainStackParamList } from '../../navigation';
 
 type RecipeDetailScreenRouteProp = RouteProp<MainStackParamList, 'RecipeDetail'>;
 
+const NutrientBar = ({ 
+  label, 
+  value, 
+  maxValue, 
+  unit, 
+  color, 
+  isDarkMode 
+}: { 
+  label: string; 
+  value: number; 
+  maxValue: number; 
+  unit: string; 
+  color: string; 
+  isDarkMode: boolean; 
+}) => {
+  const percentage = Math.min((value / maxValue) * 100, 100);
+  
+  return (
+    <View style={styles.nutrientBarContainer}>
+      <View style={styles.nutrientLabelContainer}>
+        <Text style={[styles.nutrientLabel, isDarkMode && styles.textLight]}>{label}</Text>
+        <Text style={[styles.nutrientValue, isDarkMode && styles.textLight]}>
+          {value}{unit}
+        </Text>
+      </View>
+      <View style={[styles.nutrientBarBackground, isDarkMode && styles.nutrientBarBackgroundDark]}>
+        <View 
+          style={[
+            styles.nutrientBarFill, 
+            { width: `${percentage}%`, backgroundColor: color }
+          ]} 
+        />
+      </View>
+    </View>
+  );
+};
+
+const HealthScoreIndicator = ({ score, isDarkMode }: { score: number; isDarkMode: boolean }) => {
+  let color = '#FF6B6B'; // Red for poor score
+  let label = 'Poor';
+  
+  if (score >= 80) {
+    color = '#5DB075'; // Green for excellent
+    label = 'Excellent';
+  } else if (score >= 60) {
+    color = '#78D237'; // Light green for good
+    label = 'Good';
+  } else if (score >= 40) {
+    color = '#FFD166'; // Yellow for fair
+    label = 'Fair';
+  } else if (score >= 20) {
+    color = '#FF9F1C'; // Orange for below average
+    label = 'Below Average';
+  }
+  
+  return (
+    <View style={styles.healthScoreContainer}>
+      <View style={styles.healthScoreHeader}>
+        <Text style={[styles.healthScoreTitle, isDarkMode && styles.textLight]}>Health Score</Text>
+        <View style={[styles.healthScoreBadge, { backgroundColor: color }]}>
+          <Text style={styles.healthScoreLabel}>{label}</Text>
+        </View>
+      </View>
+      <View style={[styles.healthScoreBar, isDarkMode && styles.healthScoreBarDark]}>
+        <View 
+          style={[
+            styles.healthScoreFill, 
+            { width: `${score}%`, backgroundColor: color }
+          ]} 
+        />
+        <Text style={[styles.healthScoreText, { color }]}>{score}/100</Text>
+      </View>
+    </View>
+  );
+};
+
 const RecipeDetailScreen = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const navigation = useNavigation();
@@ -26,6 +102,7 @@ const RecipeDetailScreen = () => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFullNutrition, setShowFullNutrition] = useState(false);
 
   useEffect(() => {
     const fetchRecipeDetails = async () => {
@@ -69,7 +146,7 @@ const RecipeDetailScreen = () => {
     }
 
     // Remove HTML tags from instructions
-    const cleanInstructions = instructions.replace(/<[^>]*>?/gm, '');
+    const cleanInstructions = instructions?.replace(/<[^>]*>?/gm, '');
     
     // Split instructions by number or by periods followed by space
     const steps = cleanInstructions
@@ -88,6 +165,122 @@ const RecipeDetailScreen = () => {
             </Text>
           </View>
         ))}
+      </View>
+    );
+  };
+
+  const renderNutritionInfo = () => {
+    if (!recipe?.nutrition) {
+      return <Text style={[styles.noDataText, isDarkMode && styles.textLight]}>No nutrition information available</Text>;
+    }
+
+    // Helper function to safely parse numeric values
+    const parseNutrientValue = (value: string | number): number => {
+      if (typeof value === 'number') return value;
+      
+      // Remove any non-numeric characters except decimal point
+      const numericValue = parseFloat(value?.replace(/[^\d.]/g, ''));
+      return isNaN(numericValue) ? 0 : numericValue;
+    };
+
+    // Basic nutrition info with safe parsing
+    const basicNutrients = [
+      { name: 'Calories', value: parseNutrientValue(String(recipe.nutrition.calories)), unit: '', maxValue: 2000, color: '#FF9F1C' },
+      { name: 'Protein', value: parseNutrientValue(recipe.nutrition.protein), unit: 'g', maxValue: 50, color: '#5DB075' },
+      { name: 'Carbs', value: parseNutrientValue(recipe.nutrition.carbohydrates), unit: 'g', maxValue: 300, color: '#FFD166' },
+      { name: 'Fat', value: parseNutrientValue(recipe.nutrition.fat), unit: 'g', maxValue: 65, color: '#FF6B6B' },
+    ];
+
+    const additionalNutrients = recipe.nutrition.nutrients ? [
+      { name: 'Fiber', value: recipe.nutrition.nutrients.fiber || 0, unit: 'g', maxValue: 30, color: '#78D237' },
+      { name: 'Sugar', value: recipe.nutrition.nutrients.sugar || 0, unit: 'g', maxValue: 50, color: '#FF6B6B' },
+      { name: 'Sodium', value: recipe.nutrition.nutrients.sodium || 0, unit: 'mg', maxValue: 2300, color: '#FF9F1C' },
+      { name: 'Cholesterol', value: recipe.nutrition.nutrients.cholesterol || 0, unit: 'mg', maxValue: 300, color: '#FF6B6B' },
+    ] : [];
+
+    return (
+      <View style={styles.nutritionContainer}>
+        {basicNutrients.map((nutrient, index) => (
+          <NutrientBar
+            key={index}
+            label={nutrient.name}
+            value={nutrient.value}
+            maxValue={nutrient.maxValue}
+            unit={nutrient.unit}
+            color={nutrient.color}
+            isDarkMode={isDarkMode}
+          />
+        ))}
+        
+        {showFullNutrition && additionalNutrients.length > 0 && (
+          <View style={styles.additionalNutrients}>
+            {additionalNutrients.map((nutrient, index) => (
+              <NutrientBar
+                key={`additional-${index}`}
+                label={nutrient.name}
+                value={nutrient.value}
+                maxValue={nutrient.maxValue}
+                unit={nutrient.unit}
+                color={nutrient.color}
+                isDarkMode={isDarkMode}
+              />
+            ))}
+          </View>
+        )}
+        
+        {additionalNutrients.length > 0 && (
+          <TouchableOpacity 
+            style={styles.showMoreButton} 
+            onPress={() => setShowFullNutrition(!showFullNutrition)}
+          >
+            <Text style={styles.showMoreButtonText}>
+              {showFullNutrition ? 'Show Less' : 'Show More'}
+            </Text>
+            <Icon 
+              name={showFullNutrition ? 'chevron-up' : 'chevron-down'} 
+              size={16} 
+              color="#5DB075" 
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
+  const renderDietaryTags = () => {
+    if (!recipe?.diets || recipe.diets.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.dietaryTagsContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {recipe.diets.map((diet, index) => (
+            <View key={index} style={styles.dietaryTag}>
+              <Text style={styles.dietaryTagText}>{diet}</Text>
+            </View>
+          ))}
+          {recipe.vegetarian && (
+            <View style={styles.dietaryTag}>
+              <Text style={styles.dietaryTagText}>Vegetarian</Text>
+            </View>
+          )}
+          {recipe.vegan && (
+            <View style={styles.dietaryTag}>
+              <Text style={styles.dietaryTagText}>Vegan</Text>
+            </View>
+          )}
+          {recipe.glutenFree && (
+            <View style={styles.dietaryTag}>
+              <Text style={styles.dietaryTagText}>Gluten Free</Text>
+            </View>
+          )}
+          {recipe.dairyFree && (
+            <View style={styles.dietaryTag}>
+              <Text style={styles.dietaryTagText}>Dairy Free</Text>
+            </View>
+          )}
+        </ScrollView>
       </View>
     );
   };
@@ -149,6 +342,8 @@ const RecipeDetailScreen = () => {
         <View style={styles.recipeInfo}>
           <Text style={[styles.recipeTitle, isDarkMode && styles.textLight]}>{recipe?.title}</Text>
           
+          {renderDietaryTags()}
+          
           <View style={styles.recipeMetaInfo}>
             <View style={styles.metaItem}>
               <Icon name="clock-outline" size={18} color={isDarkMode ? '#AAAAAA' : '#666666'} />
@@ -172,13 +367,22 @@ const RecipeDetailScreen = () => {
             )}
           </View>
 
+          {recipe?.healthScore && (
+            <HealthScoreIndicator score={recipe.healthScore} isDarkMode={isDarkMode} />
+          )}
+
           {recipe?.summary && (
             <View style={styles.summaryContainer}>
               <Text style={[styles.summaryText, isDarkMode && styles.textLight]}>
-                {recipe.summary.replace(/<[^>]*>?/gm, '')}
+                {recipe?.summary?.replace(/<[^>]*>?/gm, '')}
               </Text>
             </View>
           )}
+
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>Nutrition</Text>
+            {renderNutritionInfo()}
+          </View>
 
           <View style={styles.sectionContainer}>
             <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>Ingredients</Text>
@@ -246,7 +450,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333333',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   recipeMetaInfo: {
     flexDirection: 'row',
@@ -261,6 +465,119 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
     marginLeft: 5,
+  },
+  dietaryTagsContainer: {
+    marginBottom: 15,
+  },
+  dietaryTag: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  dietaryTagText: {
+    fontSize: 12,
+    color: '#5DB075',
+    fontWeight: '600',
+  },
+  healthScoreContainer: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+  },
+  healthScoreHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  healthScoreTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  healthScoreBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  healthScoreLabel: {
+    fontSize: 12,
+    color: 'white',
+    fontWeight: '600',
+  },
+  healthScoreBar: {
+    height: 24,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  healthScoreBarDark: {
+    backgroundColor: '#333333',
+  },
+  healthScoreFill: {
+    height: '100%',
+    position: 'absolute',
+    left: 0,
+    top: 0,
+  },
+  healthScoreText: {
+    position: 'absolute',
+    right: 10,
+    top: 4,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  nutritionContainer: {
+    marginBottom: 10,
+  },
+  nutrientBarContainer: {
+    marginBottom: 12,
+  },
+  nutrientLabelContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  nutrientLabel: {
+    fontSize: 14,
+    color: '#333333',
+  },
+  nutrientValue: {
+    fontSize: 14,
+    color: '#333333',
+    fontWeight: '600',
+  },
+  nutrientBarBackground: {
+    height: 8,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  nutrientBarBackgroundDark: {
+    backgroundColor: '#333333',
+  },
+  nutrientBarFill: {
+    height: '100%',
+  },
+  additionalNutrients: {
+    marginTop: 10,
+  },
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  showMoreButtonText: {
+    color: '#5DB075',
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 5,
   },
   summaryContainer: {
     marginBottom: 20,

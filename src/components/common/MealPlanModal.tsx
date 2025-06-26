@@ -7,12 +7,11 @@ import {
   Modal,
   useColorScheme,
   ScrollView,
-  TextInput,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { MealPlanOption, SingleMealRequest, MealType } from '../../types/mealPlan';
+import { MealPlanOption, SingleMealRequest } from '../../types/mealPlan';
 import { useQuestionnaireStore } from '../../store/questionnaireStore';
 import { useUserStore } from '../../store/userStore';
 import { 
@@ -20,7 +19,7 @@ import {
   mapDietaryPreferences, 
   mapAllergies, 
   mapCookingTime,
-  Recipe 
+  RecipeSearchParams
 } from '../../config/spoonacularApi';
 
 interface Props {
@@ -52,6 +51,20 @@ const MEAL_TYPES = [
   { id: 'dinner', name: 'Dinner', icon: 'silverware-fork-knife' },
 ] as const;
 
+// Map our meal types to Spoonacular API meal types
+const mapMealTypeToApiType = (mealType: 'any' | 'breakfast' | 'lunch' | 'dinner'): RecipeSearchParams['type'] => {
+  switch (mealType) {
+    case 'breakfast':
+      return 'breakfast';
+    case 'lunch':
+      return 'main course';
+    case 'dinner':
+      return 'main course';
+    default:
+      return undefined;
+  }
+};
+
 export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGenerated }) => {
   const [step, setStep] = useState<'select' | 'single-config' | 'generating'>('select');
   const [selectedOption, setSelectedOption] = useState<'single' | 'weekly' | null>(null);
@@ -63,7 +76,7 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
 
   const isDarkMode = useColorScheme() === 'dark';
   const { responses } = useQuestionnaireStore();
-  const { isPremium } = useUserStore();
+  const { isPremium, allergies, dietaryPreference } = useUserStore();
 
   const handleOptionSelect = (optionId: 'single' | 'weekly') => {
     setSelectedOption(optionId);
@@ -80,14 +93,43 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
     generateSingleMeal();
   };
 
+  // Helper function to combine allergies from both sources
+  const getCombinedAllergies = () => {
+    // Get allergies from questionnaire responses
+    const questionnaireAllergies = responses.foodAllergies || [];
+    
+    // Get allergies from user store
+    const userAllergies = allergies || [];
+    
+    // Combine and remove duplicates
+    const combinedAllergies = [...new Set([...questionnaireAllergies, ...userAllergies])];
+    
+    return combinedAllergies;
+  };
+
+  // Helper function to get dietary preferences
+  const getDietaryPreferences = () => {
+    // First check user store for specific preference
+    if (dietaryPreference) {
+      return [dietaryPreference];
+    }
+    
+    // Fall back to questionnaire responses
+    return responses.culturalPreferences || [];
+  };
+
   const generateSingleMeal = async () => {
     setIsLoading(true);
     setStep('generating');
 
     try {
+      // Get combined user preferences
+      const combinedAllergies = getCombinedAllergies();
+      const dietaryPreferences = getDietaryPreferences();
+      
       // Map user preferences to API parameters
-      const diet = mapDietaryPreferences(responses.culturalPreferences);
-      const intolerances = mapAllergies(responses.foodAllergies);
+      const diet = mapDietaryPreferences(dietaryPreferences);
+      const intolerances = mapAllergies(combinedAllergies);
       const excludeIngredients = responses.unwantedFoods.join(',');
       const maxReadyTime = mapCookingTime(responses.weekdayCookingTime);
 
@@ -97,8 +139,10 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
         intolerances: intolerances || undefined,
         excludeIngredients: excludeIngredients || undefined,
         maxReadyTime,
-        type: singleMealRequest.mealType === 'any' ? undefined : singleMealRequest.mealType,
+        type: mapMealTypeToApiType(singleMealRequest.mealType),
       };
+
+      console.log('Generating meal with parameters:', searchParams);
 
       const result = await spoonacularAPI.getRandomRecipes(searchParams);
       
@@ -151,9 +195,13 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
     setStep('generating');
 
     try {
-      // For now, we'll generate 21 random meals (7 days × 3 meals)
-      const diet = mapDietaryPreferences(responses.culturalPreferences);
-      const intolerances = mapAllergies(responses.foodAllergies);
+      // Get combined user preferences
+      const combinedAllergies = getCombinedAllergies();
+      const dietaryPreferences = getDietaryPreferences();
+      
+      // Map user preferences to API parameters
+      const diet = mapDietaryPreferences(dietaryPreferences);
+      const intolerances = mapAllergies(combinedAllergies);
       const excludeIngredients = responses.unwantedFoods.join(',');
       const maxReadyTime = mapCookingTime(responses.weekdayCookingTime);
 
@@ -163,7 +211,11 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
         intolerances: intolerances || undefined,
         excludeIngredients: excludeIngredients || undefined,
         maxReadyTime,
+        // Add minimum health score to ensure healthier options
+        minHealthScore: 50,
       };
+
+      console.log('Generating weekly plan with parameters:', searchParams);
 
       const result = await spoonacularAPI.searchRecipes(searchParams);
       
