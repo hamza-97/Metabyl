@@ -21,7 +21,9 @@ import PaywallScreen from '../screens/onboarding/PaywallScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
 import AuthenticationChoiceScreen from '../screens/auth/AuthenticationChoiceScreen';
+import DoctorInfoScreen from '../screens/auth/DoctorInfoScreen';
 import MainTabNavigator from './MainTabNavigator';
+import RecipeDetailScreen from '../screens/recipes/RecipeDetailScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -36,12 +38,17 @@ export type RootStackParamList = {
   ShoppingPreferencesScreen: undefined;
   FinalPersonalizationScreen: undefined;
   FinalPersonalizationTwoScreen: undefined;
+  DoctorInfo: undefined;
   AuthChoice: undefined;
   PaywallScreen: undefined;
   Login: undefined;
   Signup: undefined;
   MainApp: undefined;
+  RecipeDetail: { recipeId: number };
 };
+
+// Main stack param list for screens accessible after onboarding
+export type MainStackParamList = RootStackParamList;
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -66,6 +73,7 @@ const Navigation = () => {
               <Stack.Screen name="ShoppingPreferencesScreen" component={ShoppingPreferencesScreen} />
               <Stack.Screen name="FinalPersonalizationScreen" component={FinalPersonalizationScreen} />
               <Stack.Screen name="FinalPersonalizationTwoScreen" component={FinalPersonalizationTwoScreen} />
+              <Stack.Screen name="DoctorInfo" component={DoctorInfoScreen} />
               <Stack.Screen name="AuthChoice" component={AuthenticationChoiceScreen} />
               <Stack.Screen name="PaywallScreen" component={PaywallScreen} />
             </>
@@ -74,6 +82,7 @@ const Navigation = () => {
               <Stack.Screen name="MainApp" component={MainTabNavigator} />
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Signup" component={SignupScreen} />
+              <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
             </>
           )}
         </Stack.Navigator>
