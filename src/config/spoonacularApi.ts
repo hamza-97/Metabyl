@@ -17,6 +17,8 @@ export interface RecipeSearchParams {
   diet?: string;
   intolerances?: string;
   excludeIngredients?: string;
+  includeIngredients?: string;
+  query?: string;
   maxReadyTime?: number;
   type?:
     | 'main course'
@@ -34,7 +36,6 @@ export interface RecipeSearchParams {
     | 'snack'
     | 'drink';
   cuisine?: string;
-  query?: string;
 }
 
 // Meal plan generation parameters
@@ -249,6 +250,7 @@ export const mapAllergies = (allergies: string[]): string => {
     Sesame: 'sesame',
     Corn: '',
     Nightshades: '',
+    Chicken: 'chicken',
   };
 
   return allergies

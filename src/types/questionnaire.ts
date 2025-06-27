@@ -45,7 +45,8 @@ export type FoodAllergy =
   | 'Shellfish'
   | 'Sesame'
   | 'Corn'
-  | 'Nightshades';
+  | 'Nightshades'
+  | 'Chicken';
 
 export type CulturalStyle =
   | 'American comfort'

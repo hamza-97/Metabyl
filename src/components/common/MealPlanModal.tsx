@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   useColorScheme,
   ScrollView,
   Alert,
-  ActivityIndicator,
+  TextInput,
+  Animated,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { MealPlanOption, SingleMealRequest } from '../../types/mealPlan';
@@ -19,7 +21,9 @@ import {
   mapDietaryPreferences, 
   mapAllergies, 
   mapCookingTime,
-  RecipeSearchParams
+  RecipeSearchParams,
+  Recipe,
+  Ingredient
 } from '../../config/spoonacularApi';
 
 interface Props {
@@ -51,6 +55,22 @@ const MEAL_TYPES = [
   { id: 'dinner', name: 'Dinner', icon: 'silverware-fork-knife' },
 ] as const;
 
+const COOKING_TIMES = [
+  { id: 'any', name: 'Any Time', minutes: 0 },
+  { id: 'quick', name: 'Quick (< 30 min)', minutes: 30 },
+  { id: 'medium', name: '30-45 min', minutes: 45 },
+  { id: 'long', name: '45+ min', minutes: 60 },
+];
+
+// CLEAN animation definitions
+const CLEAN_DEFINITIONS = [
+  { letter: 'C', definition: 'Creating your perfect meal' },
+  { letter: 'L', definition: 'Looking for the best ingredients' },
+  { letter: 'E', definition: 'Exploring delicious recipes' },
+  { letter: 'A', definition: 'Analyzing your preferences' },
+  { letter: 'N', definition: 'Nailing the perfect match' },
+];
+
 // Map our meal types to Spoonacular API meal types
 const mapMealTypeToApiType = (mealType: 'any' | 'breakfast' | 'lunch' | 'dinner'): RecipeSearchParams['type'] => {
   switch (mealType) {
@@ -67,12 +87,25 @@ const mapMealTypeToApiType = (mealType: 'any' | 'breakfast' | 'lunch' | 'dinner'
 
 export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGenerated }) => {
   const [step, setStep] = useState<'select' | 'single-config' | 'generating'>('select');
-  const [selectedOption, setSelectedOption] = useState<'single' | 'weekly' | null>(null);
+  const [_selectedOption, setSelectedOption] = useState<'single' | 'weekly' | null>(null);
   const [singleMealRequest, setSingleMealRequest] = useState<SingleMealRequest>({
     servings: 2,
     mealType: 'any',
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
+  const [desiredIngredients, setDesiredIngredients] = useState('');
+  const [selectedCookingTime, setSelectedCookingTime] = useState(COOKING_TIMES[0].id);
+  
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const cleanAnimations = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
 
   const isDarkMode = useColorScheme() === 'dark';
   const { responses } = useQuestionnaireStore();
@@ -118,9 +151,43 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
     return responses.culturalPreferences || [];
   };
 
+  // Start the CLEAN animation sequence
+  const startCleanAnimation = () => {
+    // Reset animations
+    fadeAnim.setValue(0);
+    progressAnim.setValue(0);
+    cleanAnimations.forEach(anim => anim.setValue(0));
+    
+    // Start animation sequence
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: false,
+      }),
+    ]).start();
+
+    const definitionDelay = 600; 
+    cleanAnimations.forEach((anim, index) => {
+      setTimeout(() => {
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }).start();
+      }, 500 + (index * definitionDelay)); 
+    });
+  };
+
   const generateSingleMeal = async () => {
     setIsLoading(true);
     setStep('generating');
+    startCleanAnimation();
 
     try {
       // Get combined user preferences
@@ -130,49 +197,137 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
       // Map user preferences to API parameters
       const diet = mapDietaryPreferences(dietaryPreferences);
       const intolerances = mapAllergies(combinedAllergies);
-      const excludeIngredients = responses.unwantedFoods.join(',');
-      const maxReadyTime = mapCookingTime(responses.weekdayCookingTime);
+      
+      // Handle chicken allergy specifically
+      let excludeIngredients = responses.unwantedFoods.join(',');
+      if (combinedAllergies.includes('Chicken')) {
+        excludeIngredients = excludeIngredients 
+          ? `${excludeIngredients},chicken` 
+          : 'chicken';
+      }
+      
+      // Get cooking time limit based on selection
+      const cookingTimeOption = COOKING_TIMES.find(time => time.id === selectedCookingTime);
+      const maxReadyTime = cookingTimeOption && cookingTimeOption.id !== 'any' 
+        ? cookingTimeOption.minutes 
+        : undefined;
 
+      // Process desired ingredients to ensure better matching
+      const processedIngredients = desiredIngredients.trim();
+      
       const searchParams = {
-        number: 1,
+        number: 10, // Increase number of results to find better matches
         diet: diet || undefined,
         intolerances: intolerances || undefined,
         excludeIngredients: excludeIngredients || undefined,
         maxReadyTime,
         type: mapMealTypeToApiType(singleMealRequest.mealType),
+        // Add the desired ingredients if specified
+        includeIngredients: processedIngredients || undefined,
+        // Add query parameter for better matching when ingredients are specified
+        query: processedIngredients || undefined,
+        // Ensure we get recipes with ingredients
+        fillIngredients: true,
+        addRecipeInformation: true,
+        // Sort by readyInMinutes to prioritize recipes that match the time constraint
+        sort: maxReadyTime ? 'time' : undefined,
+        sortDirection: 'asc',
       };
 
       console.log('Generating meal with parameters:', searchParams);
 
-      const result = await spoonacularAPI.getRandomRecipes(searchParams);
+      // Use searchRecipes instead of getRandomRecipes for better ingredient matching
+      let recipes: Recipe[] = [];
       
-      if (result.recipes && result.recipes.length > 0) {
-        const recipe = result.recipes[0];
+      if (processedIngredients || maxReadyTime) {
+        // Always use search for better filtering when we have specific constraints
+        const searchResult = await spoonacularAPI.searchRecipes(searchParams);
+        recipes = searchResult.results;
+      } else {
+        const randomResult = await spoonacularAPI.getRandomRecipes(searchParams);
+        recipes = randomResult.recipes;
+      }
+        
+      if (recipes && recipes.length > 0) {
+        // Filter recipes that strictly meet the cooking time requirement
+        let matchingRecipes = recipes;
+        
+        if (maxReadyTime) {
+          matchingRecipes = recipes.filter(recipe => 
+            (recipe.readyInMinutes || 999) <= maxReadyTime
+          );
+          
+          // If no recipes match the time constraint exactly, fall back to the original list
+          // but sort them by cooking time
+          if (matchingRecipes.length === 0) {
+            console.log('No recipes match the exact time constraint, using closest matches');
+            matchingRecipes = [...recipes].sort((a, b) => 
+              (a.readyInMinutes || 999) - (b.readyInMinutes || 999)
+            );
+          }
+        }
+        
+        // Find the recipe that best matches the desired ingredients
+        let bestRecipe = matchingRecipes[0];
+        
+        if (processedIngredients) {
+          // Check if any recipe contains the desired ingredients in title
+          const desiredIngredientsArray = processedIngredients.split(',').map(i => i.trim().toLowerCase());
+          
+          for (const recipe of matchingRecipes) {
+            const titleLower = recipe.title.toLowerCase();
+            const hasIngredientInTitle = desiredIngredientsArray.some(ing => titleLower.includes(ing));
+            
+            if (hasIngredientInTitle) {
+              bestRecipe = recipe;
+              break;
+            }
+          }
+        }
+        
+        console.log('Selected recipe cooking time:', bestRecipe.readyInMinutes, 'minutes');
+        
+        const targetServings = responses.peopleCount || 2;
+        const originalServings = bestRecipe.servings || 1;
+        const servingMultiplier = targetServings / originalServings;
+        
+        // Scale ingredient quantities based on the serving multiplier
+        const scaledIngredients = bestRecipe.extendedIngredients?.map((ing: Ingredient) => ({
+          id: ing.id,
+          name: ing.name,
+          amount: ing.amount * servingMultiplier,
+          unit: ing.unit,
+          // Update the original text to reflect the scaled amount
+          original: ing.original.replace(
+            /\b(\d+(\.\d+)?)\b/,
+            (match: string) => (parseFloat(match) * servingMultiplier).toFixed(2).replace(/\.00$/, '')
+          ),
+        }));
+        
         const mealPlan = {
           type: 'single' as const,
           meals: [{
-            id: recipe.id,
-            title: recipe.title,
-            image: recipe.image,
-            readyInMinutes: recipe.readyInMinutes || 30,
-            servings: singleMealRequest.servings,
-            sourceUrl: recipe.sourceUrl,
-            summary: recipe.summary,
-            ingredients: recipe.extendedIngredients?.map(ing => ({
-              id: ing.id,
-              name: ing.name,
-              amount: ing.amount,
-              unit: ing.unit,
-              original: ing.original,
-            })),
+            id: bestRecipe.id,
+            title: bestRecipe.title,
+            image: bestRecipe.image,
+            readyInMinutes: bestRecipe.readyInMinutes || 30,
+            servings: targetServings,
+            sourceUrl: bestRecipe.sourceUrl,
+            summary: bestRecipe.summary,
+            ingredients: scaledIngredients,
           }],
           generatedAt: new Date().toISOString(),
-          servings: singleMealRequest.servings,
+          servings: targetServings,
         };
 
-        onMealPlanGenerated?.(mealPlan);
-        handleClose();
+        // Wait for animations to complete
+        setTimeout(() => {
+          onMealPlanGenerated?.(mealPlan);
+          handleClose();
+        }, 4000); // Allow time for animations to complete
       } else {
+        setIsLoading(false);
+        setStep('single-config');
         Alert.alert(
           'No recipes found',
           'We couldn\'t find any recipes matching your preferences. Try adjusting your dietary restrictions or try again.',
@@ -180,13 +335,12 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
       }
     } catch (error) {
       console.error('Error generating single meal:', error);
+      setIsLoading(false);
+      setStep('single-config');
       Alert.alert(
         'Error',
         'Failed to generate meal plan. Please check your internet connection and try again.',
       );
-    } finally {
-      setIsLoading(false);
-      setStep('select');
     }
   };
 
@@ -202,8 +356,17 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
       // Map user preferences to API parameters
       const diet = mapDietaryPreferences(dietaryPreferences);
       const intolerances = mapAllergies(combinedAllergies);
-      const excludeIngredients = responses.unwantedFoods.join(',');
+      
+      // Handle chicken allergy specifically
+      let excludeIngredients = responses.unwantedFoods.join(',');
+      if (combinedAllergies.includes('Chicken')) {
+        excludeIngredients = excludeIngredients 
+          ? `${excludeIngredients},chicken` 
+          : 'chicken';
+      }
+      
       const maxReadyTime = mapCookingTime(responses.weekdayCookingTime);
+      const targetServings = responses.peopleCount || 1;
 
       const searchParams = {
         number: 21,
@@ -232,14 +395,31 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
           mealTypes.forEach(mealType => {
             if (recipeIndex < recipes.length) {
               const recipe = recipes[recipeIndex];
+              const originalServings = recipe.servings || 1;
+              const servingMultiplier = targetServings / originalServings;
+              
+              // Scale ingredient quantities based on the serving multiplier
+              const scaledIngredients = recipe.extendedIngredients?.map(ing => ({
+                id: ing.id,
+                name: ing.name,
+                amount: ing.amount * servingMultiplier,
+                unit: ing.unit,
+                // Update the original text to reflect the scaled amount
+                original: ing.original.replace(
+                  /\b(\d+(\.\d+)?)\b/,
+                  (match) => (parseFloat(match) * servingMultiplier).toFixed(2).replace(/\.00$/, '')
+                ),
+              }));
+              
               weeklyPlan[day][mealType] = {
                 id: recipe.id,
                 title: recipe.title,
                 image: recipe.image,
                 readyInMinutes: recipe.readyInMinutes || 30,
-                servings: responses.peopleCount,
+                servings: targetServings,
                 sourceUrl: recipe.sourceUrl,
                 summary: recipe.summary,
+                ingredients: scaledIngredients,
               };
               recipeIndex++;
             }
@@ -250,7 +430,7 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
           type: 'weekly' as const,
           weeklyData: weeklyPlan,
           generatedAt: new Date().toISOString(),
-          servings: responses.peopleCount,
+          servings: targetServings,
         };
 
         onMealPlanGenerated?.(mealPlan);
@@ -277,6 +457,8 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
     setStep('select');
     setSelectedOption(null);
     setSingleMealRequest({ servings: 2, mealType: 'any' });
+    setDesiredIngredients('');
+    setSelectedCookingTime(COOKING_TIMES[0].id);
     setIsLoading(false);
     onClose();
   };
@@ -341,30 +523,48 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
 
       <View style={styles.configSection}>
         <Text style={[styles.configLabel, isDarkMode && styles.textLight]}>
-          How many people?
+          What ingredients would you like to include?
         </Text>
-        <View style={styles.servingsContainer}>
-          <TouchableOpacity
-            style={styles.servingsButton}
-            onPress={() => setSingleMealRequest(prev => ({
-              ...prev,
-              servings: Math.max(1, prev.servings - 1)
-            }))}
-          >
-            <Icon name="minus" size={20} color="#5DB075" />
-          </TouchableOpacity>
-          <Text style={[styles.servingsText, isDarkMode && styles.textLight]}>
-            {singleMealRequest.servings}
-          </Text>
-          <TouchableOpacity
-            style={styles.servingsButton}
-            onPress={() => setSingleMealRequest(prev => ({
-              ...prev,
-              servings: prev.servings + 1
-            }))}
-          >
-            <Icon name="plus" size={20} color="#5DB075" />
-          </TouchableOpacity>
+        <TextInput
+          style={[
+            styles.ingredientsInput,
+            isDarkMode && styles.ingredientsInputDark
+          ]}
+          value={desiredIngredients}
+          onChangeText={setDesiredIngredients}
+          placeholder="e.g., rice, chicken, vegetables"
+          placeholderTextColor={isDarkMode ? '#777777' : '#999999'}
+          multiline={false}
+        />
+        <Text style={[styles.inputHint, isDarkMode && styles.textLightSecondary]}>
+          Separate multiple ingredients with commas
+        </Text>
+      </View>
+
+      <View style={styles.configSection}>
+        <Text style={[styles.configLabel, isDarkMode && styles.textLight]}>
+          How much time do you have to cook?
+        </Text>
+        <View style={styles.cookingTimeContainer}>
+          {COOKING_TIMES.map((timeOption) => (
+            <TouchableOpacity
+              key={timeOption.id}
+              style={[
+                styles.cookingTimeButton,
+                isDarkMode && styles.cookingTimeButtonDark,
+                selectedCookingTime === timeOption.id && styles.cookingTimeButtonSelected,
+              ]}
+              onPress={() => setSelectedCookingTime(timeOption.id)}
+            >
+              <Text style={[
+                styles.cookingTimeText,
+                isDarkMode && styles.textLight,
+                selectedCookingTime === timeOption.id && styles.cookingTimeTextSelected,
+              ]}>
+                {timeOption.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
@@ -414,13 +614,67 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
 
   const renderGenerating = () => (
     <View style={[styles.content, styles.loadingContainer]}>
-      <ActivityIndicator size="large" color="#5DB075" />
-      <Text style={[styles.loadingTitle, isDarkMode && styles.textLight]}>
-        Creating your meal plan...
-      </Text>
-      <Text style={[styles.loadingSubtitle, isDarkMode && styles.textLightSecondary]}>
-        We're finding the perfect recipes for you
-      </Text>
+      <View style={styles.animationContainer}>
+        <Image source={require("../../../assets/img/logo.png")} style={styles.logoStyle} />
+        
+        <Animated.View
+          style={[
+            styles.loadingSection,
+            {
+              opacity: fadeAnim,
+            },
+          ]}
+        >
+          <View style={styles.loadingBarContainer}>
+            <View style={styles.loadingBar}>
+              <Animated.View
+                style={[
+                  styles.loadingProgress,
+                  {
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%'],
+                    }),
+                  },
+                ]}
+              />
+            </View>
+            <Text style={[styles.loadingText, isDarkMode && styles.textLightSecondary]}>
+              Creating your perfect meal...
+            </Text>
+          </View>
+          
+          {/* CLEAN Definitions */}
+          <View style={styles.definitionsContainer}>
+            {CLEAN_DEFINITIONS.map((item, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.definitionItem,
+                  {
+                    opacity: cleanAnimations[index],
+                    transform: [
+                      {
+                        translateY: cleanAnimations[index].interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Text style={styles.definitionLetter}>
+                  {item.letter}
+                </Text>
+                <Text style={[styles.definitionText, isDarkMode && styles.textLightSecondary]}>
+                  {item.definition}
+                </Text>
+              </Animated.View>
+            ))}
+          </View>
+        </Animated.View>
+      </View>
     </View>
   );
 
@@ -630,5 +884,122 @@ const styles = StyleSheet.create({
   },
   textLightSecondary: {
     color: '#AAAAAA',
+  },
+  ingredientsInput: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 16,
+    color: '#333333',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  ingredientsInputDark: {
+    backgroundColor: '#2A2A2A',
+    borderColor: '#3A3A3A',
+    color: '#FFFFFF',
+  },
+  inputHint: {
+    fontSize: 12,
+    color: '#999999',
+    marginTop: 5,
+    marginLeft: 5,
+  },
+  cookingTimeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  cookingTimeButton: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginBottom: 10,
+  },
+  cookingTimeButtonDark: {
+    backgroundColor: '#2A2A2A',
+    borderColor: '#3A3A3A',
+  },
+  cookingTimeButtonSelected: {
+    backgroundColor: '#5DB075',
+    borderColor: '#5DB075',
+  },
+  cookingTimeText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+  },
+  cookingTimeTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  animationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 30,
+  },
+  logoStyle: {
+    width: 120,
+    height: 120,
+    borderRadius: 30,
+    marginBottom: 30,
+  },
+  loadingSection: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  loadingBarContainer: {
+    width: '100%',
+    maxWidth: 280,
+    alignItems: 'center',
+  },
+  loadingBar: {
+    width: '100%',
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  loadingProgress: {
+    height: '100%',
+    backgroundColor: "#5DB075",
+    borderRadius: 4,
+  },
+  loadingText: {
+    color: "#666666",
+    textAlign: 'center',
+    marginBottom: 20,
+    fontSize: 16,
+    fontStyle: 'italic',
+  },
+  definitionsContainer: {
+    width: '100%',
+    maxWidth: 280,
+    alignItems: 'flex-start',
+  },
+  definitionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    width: '100%',
+  },
+  definitionLetter: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#5DB075',
+    width: 25,
+    textAlign: 'center',
+  },
+  definitionText: {
+    fontSize: 14,
+    color: '#666666',
+    marginLeft: 10,
+    flex: 1,
   },
 }); 

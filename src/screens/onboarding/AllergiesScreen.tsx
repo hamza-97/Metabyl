@@ -30,6 +30,7 @@ const allergies: Allergy[] = [
   { id: 'wheat', name: 'Wheat', icon: 'barley' },
   { id: 'soy', name: 'Soy', icon: 'soy-sauce' },
   { id: 'sesame', name: 'Sesame', icon: 'seed' },
+  { id: 'chicken', name: 'Chicken', icon: 'food-drumstick' },
 ];
 
 const AllergiesScreen = () => {

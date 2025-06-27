@@ -8,12 +8,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   useColorScheme,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { spoonacularAPI, Recipe, Ingredient } from '../../config/spoonacularApi';
 import { MainStackParamList } from '../../navigation';
+import { useShoppingListStore } from '../../store/shoppingListStore';
 
 type RecipeDetailScreenRouteProp = RouteProp<MainStackParamList, 'RecipeDetail'>;
 
@@ -102,7 +104,15 @@ const RecipeDetailScreen = () => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showFullNutrition, setShowFullNutrition] = useState(false);
+  const [_showFullNutrition, _setShowFullNutrition] = useState(false);
+  const [servings, setServings] = useState(0);
+  const [scaledIngredients, setScaledIngredients] = useState<Ingredient[]>([]);
+  const [activeTab, setActiveTab] = useState<'grocery' | 'cooking'>('grocery');
+  const [selectedIngredients, setSelectedIngredients] = useState<Record<string, boolean>>({});
+  const [isAllSelected, setIsAllSelected] = useState(false);
+  
+  // Shopping list store
+  const addItems = useShoppingListStore(state => state.addItems);
 
   useEffect(() => {
     const fetchRecipeDetails = async () => {
@@ -110,6 +120,8 @@ const RecipeDetailScreen = () => {
         setLoading(true);
         const recipeData = await spoonacularAPI.getRecipeInformation(recipeId);
         setRecipe(recipeData);
+        setServings(recipeData.servings || 1);
+        setScaledIngredients(recipeData.extendedIngredients || []);
         setLoading(false);
       } catch (err) {
         console.error('Failed to fetch recipe details:', err);
@@ -120,6 +132,94 @@ const RecipeDetailScreen = () => {
 
     fetchRecipeDetails();
   }, [recipeId]);
+
+  // Function to adjust servings and scale ingredients
+  const adjustServings = (newServings: number) => {
+    if (!recipe || !recipe.extendedIngredients) return;
+    if (newServings < 1) return;
+    
+    const originalServings = recipe.servings || 1;
+    const servingMultiplier = newServings / originalServings;
+    
+    // Scale ingredient quantities based on the serving multiplier
+    const newScaledIngredients = recipe.extendedIngredients.map(ing => ({
+      ...ing,
+      amount: ing.amount * servingMultiplier,
+      original: ing.original.replace(
+        /\b(\d+(\.\d+)?)\b/,
+        (match) => (parseFloat(match) * servingMultiplier).toFixed(2).replace(/\.00$/, '')
+      ),
+    }));
+    
+    setServings(newServings);
+    setScaledIngredients(newScaledIngredients);
+  };
+
+  // Function to handle checkbox toggle
+  const toggleIngredient = (index: number) => {
+    setSelectedIngredients(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  // Function to toggle all ingredients
+  const toggleAllIngredients = () => {
+    const newIsAllSelected = !isAllSelected;
+    setIsAllSelected(newIsAllSelected);
+    
+    const newSelectedIngredients: Record<string, boolean> = {};
+    if (scaledIngredients) {
+      scaledIngredients.forEach((_, index) => {
+        newSelectedIngredients[index] = newIsAllSelected;
+      });
+    }
+    
+    setSelectedIngredients(newSelectedIngredients);
+  };
+
+  // Function to add selected ingredients to shopping list
+  const addToShoppingList = () => {
+    if (!recipe) return;
+    
+    const selectedItems = Object.entries(selectedIngredients)
+      .filter(([_, isSelected]) => isSelected)
+      .map(([indexStr]) => {
+        const index = parseInt(indexStr, 10);
+        const ingredient = scaledIngredients[index];
+        return {
+          name: ingredient.name,
+          amount: ingredient.amount,
+          unit: ingredient.unit,
+          recipeId: recipe.id,
+          recipeName: recipe.title,
+          original: ingredient.original,
+        };
+      });
+    
+    if (selectedItems.length === 0) {
+      Alert.alert('No items selected', 'Please select at least one ingredient to add to your shopping list.');
+      return;
+    }
+    
+    addItems(selectedItems);
+    
+    Alert.alert(
+      'Added to Shopping List', 
+      `${selectedItems.length} item${selectedItems.length > 1 ? 's' : ''} added to your shopping list.`,
+      [
+        { text: 'OK' },
+        { 
+          text: 'View Shopping List', 
+          onPress: () => navigation.navigate('ShoppingList' as never) 
+        }
+      ]
+    );
+    
+    // Reset selections
+    setSelectedIngredients({});
+    setIsAllSelected(false);
+  };
 
   const renderIngredients = (ingredients?: Ingredient[]) => {
     if (!ingredients || ingredients.length === 0) {
@@ -191,13 +291,6 @@ const RecipeDetailScreen = () => {
       { name: 'Fat', value: parseNutrientValue(recipe.nutrition.fat), unit: 'g', maxValue: 65, color: '#FF6B6B' },
     ];
 
-    const additionalNutrients = recipe.nutrition.nutrients ? [
-      { name: 'Fiber', value: recipe.nutrition.nutrients.fiber || 0, unit: 'g', maxValue: 30, color: '#78D237' },
-      { name: 'Sugar', value: recipe.nutrition.nutrients.sugar || 0, unit: 'g', maxValue: 50, color: '#FF6B6B' },
-      { name: 'Sodium', value: recipe.nutrition.nutrients.sodium || 0, unit: 'mg', maxValue: 2300, color: '#FF9F1C' },
-      { name: 'Cholesterol', value: recipe.nutrition.nutrients.cholesterol || 0, unit: 'mg', maxValue: 300, color: '#FF6B6B' },
-    ] : [];
-
     return (
       <View style={styles.nutritionContainer}>
         {basicNutrients.map((nutrient, index) => (
@@ -211,38 +304,6 @@ const RecipeDetailScreen = () => {
             isDarkMode={isDarkMode}
           />
         ))}
-        
-        {showFullNutrition && additionalNutrients.length > 0 && (
-          <View style={styles.additionalNutrients}>
-            {additionalNutrients.map((nutrient, index) => (
-              <NutrientBar
-                key={`additional-${index}`}
-                label={nutrient.name}
-                value={nutrient.value}
-                maxValue={nutrient.maxValue}
-                unit={nutrient.unit}
-                color={nutrient.color}
-                isDarkMode={isDarkMode}
-              />
-            ))}
-          </View>
-        )}
-        
-        {additionalNutrients.length > 0 && (
-          <TouchableOpacity 
-            style={styles.showMoreButton} 
-            onPress={() => setShowFullNutrition(!showFullNutrition)}
-          >
-            <Text style={styles.showMoreButtonText}>
-              {showFullNutrition ? 'Show Less' : 'Show More'}
-            </Text>
-            <Icon 
-              name={showFullNutrition ? 'chevron-up' : 'chevron-down'} 
-              size={16} 
-              color="#5DB075" 
-            />
-          </TouchableOpacity>
-        )}
       </View>
     );
   };
@@ -283,6 +344,149 @@ const RecipeDetailScreen = () => {
         </ScrollView>
       </View>
     );
+  };
+
+  // Function to render grocery list (shopping items)
+  const renderGroceryList = (ingredients?: Ingredient[]) => {
+    if (!ingredients || ingredients.length === 0) {
+      return <Text style={[styles.noDataText, isDarkMode && styles.textLight]}>No ingredients information available</Text>;
+    }
+
+    // Group ingredients by aisle or category if available
+    const groceryItems = ingredients.map((ingredient) => ({
+      name: ingredient.name,
+      amount: ingredient.amount,
+      unit: ingredient.unit,
+      original: ingredient.original,
+    }));
+
+    return (
+      <View style={styles.groceryListContainer}>
+        <View style={styles.groceryHeader}>
+          <Text style={[styles.groceryListTitle, isDarkMode && styles.textLight]}>Shopping List</Text>
+          <TouchableOpacity 
+            style={styles.selectAllButton}
+            onPress={toggleAllIngredients}
+          >
+            <Text style={styles.selectAllText}>
+              {isAllSelected ? 'Deselect All' : 'Select All'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.groceryList}>
+          {groceryItems.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.groceryItem}
+              onPress={() => toggleIngredient(index)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.groceryCheckbox,
+                selectedIngredients[index] && styles.groceryCheckboxChecked
+              ]}>
+                {selectedIngredients[index] && (
+                  <Icon name="check" size={16} color="#FFFFFF" />
+                )}
+              </View>
+              <Text style={[
+                styles.groceryItemText, 
+                isDarkMode && styles.textLight,
+                selectedIngredients[index] && styles.groceryItemTextChecked
+              ]}>
+                {item.original}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.addToListButton}
+          onPress={addToShoppingList}
+        >
+          <Icon name="cart-plus" size={20} color="#FFFFFF" />
+          <Text style={styles.addToListButtonText}>Add to Shopping List</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  // Function to render tabs
+  const renderTabs = () => (
+    <View style={styles.tabsContainer}>
+      <TouchableOpacity 
+        style={[
+          styles.tab, 
+          activeTab === 'grocery' && styles.activeTab,
+          isDarkMode && styles.tabDark,
+          activeTab === 'grocery' && isDarkMode && styles.activeTabDark,
+        ]}
+        onPress={() => setActiveTab('grocery')}
+      >
+        <Icon 
+          name="cart-outline" 
+          size={20} 
+          color={activeTab === 'grocery' ? '#5DB075' : isDarkMode ? '#AAAAAA' : '#666666'} 
+        />
+        <Text 
+          style={[
+            styles.tabText, 
+            activeTab === 'grocery' && styles.activeTabText,
+            isDarkMode && styles.textLightSecondary,
+            activeTab === 'grocery' && isDarkMode && styles.activeTabTextDark,
+          ]}
+        >
+          Grocery
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={[
+          styles.tab, 
+          activeTab === 'cooking' && styles.activeTab,
+          isDarkMode && styles.tabDark,
+          activeTab === 'cooking' && isDarkMode && styles.activeTabDark,
+        ]}
+        onPress={() => setActiveTab('cooking')}
+      >
+        <Icon 
+          name="chef-hat" 
+          size={20} 
+          color={activeTab === 'cooking' ? '#5DB075' : isDarkMode ? '#AAAAAA' : '#666666'} 
+        />
+        <Text 
+          style={[
+            styles.tabText, 
+            activeTab === 'cooking' && styles.activeTabText,
+            isDarkMode && styles.textLightSecondary,
+            activeTab === 'cooking' && isDarkMode && styles.activeTabTextDark,
+          ]}
+        >
+          Cooking
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Function to render content based on active tab
+  const renderTabContent = () => {
+    if (activeTab === 'grocery') {
+      return renderGroceryList(scaledIngredients);
+    } else {
+      return (
+        <>
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>Ingredients</Text>
+            {renderIngredients(scaledIngredients)}
+          </View>
+
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>Instructions</Text>
+            {renderInstructions(recipe?.instructions)}
+          </View>
+        </>
+      );
+    }
   };
 
   if (loading) {
@@ -351,12 +555,30 @@ const RecipeDetailScreen = () => {
                 {recipe?.readyInMinutes || '?'} mins
               </Text>
             </View>
-            <View style={styles.metaItem}>
-              <Icon name="account-group-outline" size={18} color={isDarkMode ? '#AAAAAA' : '#666666'} />
-              <Text style={[styles.metaText, isDarkMode && styles.textLightSecondary]}>
-                {recipe?.servings || '?'} servings
-              </Text>
+            
+            <View style={styles.servingsContainer}>
+              <TouchableOpacity
+                style={styles.servingsButton}
+                onPress={() => adjustServings(servings - 1)}
+              >
+                <Icon name="minus" size={16} color="#5DB075" />
+              </TouchableOpacity>
+              <View style={styles.servingsTextContainer}>
+                <Text style={[styles.servingsText, isDarkMode && styles.textLight]}>
+                  {servings}
+                </Text>
+                <Text style={[styles.servingsLabel, isDarkMode && styles.textLightSecondary]}>
+                  {servings > 1 ? 'servings' : 'serving'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.servingsButton}
+                onPress={() => adjustServings(servings + 1)}
+              >
+                <Icon name="plus" size={16} color="#5DB075" />
+              </TouchableOpacity>
             </View>
+            
             {recipe?.nutrition?.calories && (
               <View style={styles.metaItem}>
                 <Icon name="fire" size={18} color={isDarkMode ? '#AAAAAA' : '#666666'} />
@@ -384,15 +606,8 @@ const RecipeDetailScreen = () => {
             {renderNutritionInfo()}
           </View>
 
-          <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>Ingredients</Text>
-            {renderIngredients(recipe?.extendedIngredients)}
-          </View>
-
-          <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>Instructions</Text>
-            {renderInstructions(recipe?.instructions)}
-          </View>
+          {renderTabs()}
+          {renderTabContent()}
 
           {recipe?.sourceUrl && (
             <View style={styles.sourceContainer}>
@@ -702,6 +917,143 @@ const styles = StyleSheet.create({
   },
   textLightSecondary: {
     color: '#AAAAAA',
+  },
+  servingsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  servingsButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E8F5EF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  servingsTextContainer: {
+    marginHorizontal: 8,
+    alignItems: 'center',
+  },
+  servingsText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  servingsLabel: {
+    fontSize: 12,
+    color: '#666666',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    marginVertical: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#F5F5F5',
+  },
+  tabDark: {
+    backgroundColor: '#2A2A2A',
+  },
+  activeTab: {
+    backgroundColor: '#E8F5EF',
+  },
+  activeTabDark: {
+    backgroundColor: '#3D5A4C',
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666666',
+    marginLeft: 8,
+  },
+  activeTabText: {
+    color: '#5DB075',
+    fontWeight: '600',
+  },
+  activeTabTextDark: {
+    color: '#5DB075',
+  },
+  
+  groceryListContainer: {
+    marginBottom: 20,
+  },
+  groceryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  groceryListTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  selectAllButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  selectAllText: {
+    fontSize: 14,
+    color: '#5DB075',
+    fontWeight: '500',
+  },
+  groceryList: {
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    padding: 15,
+  },
+  groceryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  groceryCheckbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 1,
+    borderColor: '#5DB075',
+    borderRadius: 4,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  groceryCheckboxChecked: {
+    backgroundColor: '#5DB075',
+  },
+  groceryItemText: {
+    fontSize: 16,
+    color: '#333333',
+    flex: 1,
+  },
+  groceryItemTextChecked: {
+    textDecorationLine: 'line-through',
+    opacity: 0.7,
+  },
+  addToListButton: {
+    backgroundColor: '#5DB075',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 20,
+  },
+  addToListButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 

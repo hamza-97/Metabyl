@@ -33,6 +33,7 @@ const FOOD_ALLERGIES: { id: FoodAllergy; name: string; description: string; icon
   { id: 'Sesame', name: 'Sesame', description: 'Sesame seeds and oil', icon: 'seed' },
   { id: 'Corn', name: 'Corn', description: 'Corn and corn products', icon: 'corn' },
   { id: 'Nightshades', name: 'Nightshades', description: 'Tomatoes, peppers, eggplant', icon: 'chili-mild' },
+  { id: 'Chicken', name: 'Chicken', description: 'Chicken and chicken products', icon: 'food-drumstick' },
 ];
 
 export const DietaryPreferencesScreen: React.FC = () => {

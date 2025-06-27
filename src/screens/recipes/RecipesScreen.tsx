@@ -15,7 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation';
-import { spoonacularAPI, Recipe, RecipeSearchParams } from '../../config/spoonacularApi';
+import { spoonacularAPI, Recipe, RecipeSearchParams, mapAllergies } from '../../config/spoonacularApi';
 import { useUserStore } from '../../store/userStore';
 
 type RecipesNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RecipeDetail'>;
@@ -48,7 +48,16 @@ const RecipesScreen = () => {
       
       // Apply dietary restrictions from user preferences
       if (userPreferences.allergies && userPreferences.allergies.length > 0) {
-        searchParams.intolerances = userPreferences.allergies.join(',');
+        // Use the mapAllergies function to properly format allergies for the API
+        const allergiesString = mapAllergies(userPreferences.allergies);
+        if (allergiesString) {
+          searchParams.intolerances = allergiesString;
+        }
+        
+        // Check if chicken is in allergies and add it to excludeIngredients
+        if (userPreferences.allergies.includes('chicken')) {
+          searchParams.excludeIngredients = 'chicken';
+        }
       }
       
       // Apply filter-specific parameters
