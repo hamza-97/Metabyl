@@ -293,7 +293,7 @@ const RecipeDetailScreen = () => {
 
     return (
       <View style={styles.nutritionContainer}>
-        {basicNutrients.map((nutrient, index) => (
+        {/* {basicNutrients.map((nutrient, index) => (
           <NutrientBar
             key={index}
             label={nutrient.name}
@@ -303,7 +303,7 @@ const RecipeDetailScreen = () => {
             color={nutrient.color}
             isDarkMode={isDarkMode}
           />
-        ))}
+        ))} */}
       </View>
     );
   };
@@ -601,10 +601,10 @@ const RecipeDetailScreen = () => {
             </View>
           )}
 
-          <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>Nutrition</Text>
-            {renderNutritionInfo()}
-          </View>
+          {/* <View style={styles.sectionContainer}> */}
+            {/* <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>Nutrition</Text> */}
+            {/* {renderNutritionInfo()} */}
+          {/* </View> */}
 
           {renderTabs()}
           {renderTabContent()}

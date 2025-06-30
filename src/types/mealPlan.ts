@@ -28,13 +28,6 @@ export interface GeneratedMeal {
   }[];
 }
 
-export interface GeneratedMealPlan {
-  type: 'single' | 'weekly';
-  meals: GeneratedMeal[];
-  generatedAt: string;
-  servings?: number;
-}
-
 export interface WeeklyMealPlanData {
   [day: string]: {
     breakfast?: GeneratedMeal;
@@ -42,5 +35,22 @@ export interface WeeklyMealPlanData {
     dinner?: GeneratedMeal;
   };
 }
+
+export interface SingleMealPlan {
+  type: 'single';
+  meals: GeneratedMeal[];
+  generatedAt: string;
+  servings?: number;
+}
+
+export interface WeeklyMealPlan {
+  type: 'weekly';
+  meals: GeneratedMeal[];
+  weeklyData: WeeklyMealPlanData;
+  generatedAt: string;
+  servings?: number;
+}
+
+export type GeneratedMealPlan = SingleMealPlan | WeeklyMealPlan;
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'any';

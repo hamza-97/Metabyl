@@ -44,6 +44,10 @@ const HomeScreen = () => {
     navigation.navigate('Recipes');
   };
 
+  const navigateToWeeklyMealPlan = (weeklyPlan: any) => {
+    navigation.navigate('WeeklyMealPlan', { weeklyPlan });
+  };
+
   // Function to get meal type based on current time
   const getMealTypeForCurrentTime = () => {
     const hour = new Date().getHours();
@@ -52,7 +56,68 @@ const HomeScreen = () => {
     return 'Dinner';
   };
 
-  const currentMealType = getMealTypeForCurrentTime();
+  // Function to get next meal from weekly plan
+  const getNextMealFromWeeklyPlan = () => {
+    const weeklyPlan = mealPlans.find(plan => plan.type === 'weekly');
+    if (!weeklyPlan || weeklyPlan.type !== 'weekly') return null;
+    
+    // Type assertion after checking - use any to avoid import issues
+    const typedWeeklyPlan = weeklyPlan as any;
+    if (!typedWeeklyPlan.weeklyData) return null;
+
+    const today = new Date();
+    const currentHour = today.getHours();
+    const currentMinute = today.getMinutes();
+    const currentTime = currentHour * 60 + currentMinute;
+    
+    // Meal times in minutes from midnight
+    const breakfastTime = 8 * 60; // 8:00 AM
+    const lunchTime = 12 * 60 + 30; // 12:30 PM  
+    const dinnerTime = 19 * 60; // 7:00 PM
+    
+    // Get current day of week (0 = Sunday, 1 = Monday, etc.)
+    const dayOfWeek = today.getDay();
+    const mondayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday = 0 index
+    
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const currentDay = days[mondayIndex];
+    
+    // Determine next meal
+    let nextMealType;
+    let nextMealDay = currentDay;
+    
+    if (currentTime < breakfastTime) {
+      nextMealType = 'breakfast';
+    } else if (currentTime < lunchTime) {
+      nextMealType = 'lunch';
+    } else if (currentTime < dinnerTime) {
+      nextMealType = 'dinner';
+    } else {
+      // After dinner, next meal is tomorrow's breakfast
+      nextMealType = 'breakfast';
+      const nextDayIndex = (mondayIndex + 1) % 7;
+      nextMealDay = days[nextDayIndex];
+    }
+    
+    // Get the meal from weekly plan
+    const dayMeals = typedWeeklyPlan.weeklyData[nextMealDay];
+    if (!dayMeals) return null;
+    
+    const nextMeal = dayMeals[nextMealType as keyof typeof dayMeals];
+    if (!nextMeal) return null;
+    
+    return {
+      meal: nextMeal,
+      mealType: nextMealType,
+      isNextDay: nextMealDay !== currentDay
+    };
+  };
+
+  const nextMealInfo = getNextMealFromWeeklyPlan();
+  const currentMealType = nextMealInfo ? 
+    (nextMealInfo.mealType.charAt(0).toUpperCase() + nextMealInfo.mealType.slice(1)) + 
+    (nextMealInfo.isNextDay ? ' (Tomorrow)' : '') : 
+    getMealTypeForCurrentTime();
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
@@ -99,24 +164,26 @@ const HomeScreen = () => {
           </View>
         ) : (
           <View style={styles.mealPlansContainer}>
-            {mealPlans.slice(0, 1).map((plan, index) => {
-              // Safely extract meal data
-              const meal = plan.meals && plan.meals.length > 0 ? plan.meals[0] : null;
-              const healthScore = meal && 'healthScore' in meal ? (meal.healthScore as number) : undefined;
+            {(() => {
+              // Show next meal from weekly plan if available, otherwise show single meal
+              const displayMeal = nextMealInfo ? nextMealInfo.meal : 
+                (mealPlans.find(plan => plan.type === 'single')?.meals?.[0] || null);
+              const displayPlan = nextMealInfo ? mealPlans.find(plan => plan.type === 'weekly') :
+                mealPlans.find(plan => plan.type === 'single');
+              
+              if (!displayMeal || !displayPlan) return null;
+              
+              const healthScore = displayMeal && 'healthScore' in displayMeal ? (displayMeal.healthScore as number) : undefined;
               
               return (
                 <TouchableOpacity 
-                  key={index} 
+                  key="next-meal" 
                   style={styles.mealPlanCard}
-                  onPress={() => {
-                    if (plan.type === 'single' && meal) {
-                      navigateToRecipeDetail(meal.id);
-                    }
-                  }}
+                  onPress={() => navigateToRecipeDetail(displayMeal.id)}
                 >
-                  {meal && meal.image ? (
+                  {displayMeal.image ? (
                     <Image 
-                      source={{uri: meal.image}} 
+                      source={{uri: displayMeal.image}} 
                       style={styles.mealImage}
                       resizeMode="cover"
                     />
@@ -129,11 +196,16 @@ const HomeScreen = () => {
                   <View style={styles.mealInfoContainer}>
                     <View style={styles.mealTitleContainer}>
                       <Text style={[styles.mealTitle, isDarkMode && styles.textLight]} numberOfLines={2}>
-                        {plan.type === 'single' && meal ? meal.title : '7-Day Meal Plan'}
+                        {displayMeal.title}
                       </Text>
                       
                       <View style={styles.mealBadge}>
-                        <Text style={styles.mealBadgeText}>{currentMealType}</Text>
+                        <Text style={styles.mealBadgeText}>
+                          {nextMealInfo ? 
+                            (nextMealInfo.mealType.charAt(0).toUpperCase() + nextMealInfo.mealType.slice(1)) : 
+                            currentMealType
+                          }
+                        </Text>
                       </View>
                     </View>
                     
@@ -141,17 +213,26 @@ const HomeScreen = () => {
                       <View style={styles.mealMetaItem}>
                         <Icon name="clock-outline" size={16} color={isDarkMode ? '#AAAAAA' : '#666666'} />
                         <Text style={[styles.mealMetaText, isDarkMode && styles.textLightSecondary]}>
-                          {meal?.readyInMinutes || '?'} mins
+                          {displayMeal.readyInMinutes} mins
                         </Text>
                       </View>
                       
                       <View style={styles.mealMetaItem}>
                         <Icon name="account-group-outline" size={16} color={isDarkMode ? '#AAAAAA' : '#666666'} />
                         <Text style={[styles.mealMetaText, isDarkMode && styles.textLightSecondary]}>
-                          {plan.servings || 1} {(plan.servings || 1) > 1 ? 'people' : 'person'}
+                          {displayMeal.servings} {displayMeal.servings > 1 ? 'people' : 'person'}
                         </Text>
                       </View>
                     </View>
+                    
+                    {nextMealInfo && (
+                      <View style={styles.nextMealIndicator}>
+                        <Icon name="clock-fast" size={16} color="#007AFF" />
+                        <Text style={styles.nextMealText}>
+                          Next meal {nextMealInfo.isNextDay ? 'tomorrow' : 'today'}
+                        </Text>
+                      </View>
+                    )}
                     
                     {healthScore !== undefined && (
                       <View style={styles.healthScoreContainer}>
@@ -174,7 +255,7 @@ const HomeScreen = () => {
                     
                     <TouchableOpacity 
                       style={styles.viewRecipeButton}
-                      onPress={() => meal && navigateToRecipeDetail(meal.id)}
+                      onPress={() => navigateToRecipeDetail(displayMeal.id)}
                     >
                       <Text style={styles.viewRecipeButtonText}>View Recipe</Text>
                       <Icon name="chevron-right" size={16} color="#5DB075" />
@@ -182,8 +263,51 @@ const HomeScreen = () => {
                   </View>
                 </TouchableOpacity>
               );
-            })}
+            })()}
           </View>
+        )}
+
+        {/* Weekly Meal Plan Section */}
+        {mealPlans.find(plan => plan.type === 'weekly') && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>
+                Your 7-Day Plan
+              </Text>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.weeklyPlanCard, isDarkMode && styles.weeklyPlanCardDark]}
+              onPress={() => {
+                const weeklyPlan = mealPlans.find(plan => plan.type === 'weekly');
+                if (weeklyPlan) navigateToWeeklyMealPlan(weeklyPlan);
+              }}
+            >
+              <View style={styles.weeklyPlanHeader}>
+                <View style={styles.weeklyPlanIconContainer}>
+                  <Icon name="calendar-week" size={24} color="#5DB075" />
+                </View>
+                <View style={styles.weeklyPlanInfo}>
+                  <Text style={[styles.weeklyPlanTitle, isDarkMode && styles.textLight]}>
+                    7-Day Meal Plan
+                  </Text>
+                  <Text style={[styles.weeklyPlanSubtitle, isDarkMode && styles.textLightSecondary]}>
+                    {(() => {
+                      const weeklyPlan = mealPlans.find(plan => plan.type === 'weekly');
+                      return weeklyPlan ? `Generated ${new Date(weeklyPlan.generatedAt).toLocaleDateString()}` : '';
+                    })()}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={20} color="#5DB075" />
+              </View>
+              
+              <View style={styles.weeklyPlanPreview}>
+                <Text style={[styles.weeklyPlanPreviewText, isDarkMode && styles.textLightSecondary]}>
+                  21 meals planned • Breakfast, Lunch & Dinner for 7 days
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </>
         )}
 
         <View style={styles.sectionHeader}>
@@ -423,6 +547,77 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#5DB075',
     marginRight: 4,
+  },
+  // Weekly meal plan styles
+  weeklyPlanCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  weeklyPlanCardDark: {
+    backgroundColor: '#2A2A2A',
+  },
+  weeklyPlanHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  weeklyPlanIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F0F8F1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  weeklyPlanInfo: {
+    flex: 1,
+  },
+  weeklyPlanTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 2,
+  },
+  weeklyPlanSubtitle: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  weeklyPlanPreview: {
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+  },
+  weeklyPlanPreviewText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+  },
+  // Next meal indicator styles
+  nextMealIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#F0F8FF',
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+  nextMealText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '600',
+    marginLeft: 6,
+    textTransform: 'uppercase',
   },
 });
 

@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { GeneratedMealPlan, GeneratedMeal } from '../../types/mealPlan';
+import { GeneratedMealPlan, GeneratedMeal, WeeklyMealPlanData } from '../../types/mealPlan';
 import { RootStackParamList } from '../../navigation';
 
 type MealPlanNavigationProp = NativeStackNavigationProp<RootStackParamList, 'RecipeDetail'>;
@@ -71,7 +71,7 @@ export const MealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
     </TouchableOpacity>
   );
 
-  const renderWeeklyPlan = (weeklyData: any) => {
+  const renderWeeklyPlan = (weeklyData: WeeklyMealPlanData) => {
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -87,39 +87,39 @@ export const MealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
                 {weeklyData[day].breakfast && (
                   <TouchableOpacity 
                     style={styles.mealSlot}
-                    onPress={() => navigateToRecipeDetail(weeklyData[day].breakfast)}
+                    onPress={() => navigateToRecipeDetail(weeklyData[day].breakfast!)}
                   >
                     <Text style={[styles.mealSlotTitle, isDarkMode && styles.textLightSecondary]}>
                       Breakfast
                     </Text>
                     <Text style={[styles.mealSlotName, isDarkMode && styles.textLight]}>
-                      {weeklyData[day].breakfast.title}
+                      {weeklyData[day].breakfast!.title}
                     </Text>
                   </TouchableOpacity>
                 )}
                 {weeklyData[day].lunch && (
                   <TouchableOpacity 
                     style={styles.mealSlot}
-                    onPress={() => navigateToRecipeDetail(weeklyData[day].lunch)}
+                    onPress={() => navigateToRecipeDetail(weeklyData[day].lunch!)}
                   >
                     <Text style={[styles.mealSlotTitle, isDarkMode && styles.textLightSecondary]}>
                       Lunch
                     </Text>
                     <Text style={[styles.mealSlotName, isDarkMode && styles.textLight]}>
-                      {weeklyData[day].lunch.title}
+                      {weeklyData[day].lunch!.title}
                     </Text>
                   </TouchableOpacity>
                 )}
                 {weeklyData[day].dinner && (
                   <TouchableOpacity 
                     style={styles.mealSlot}
-                    onPress={() => navigateToRecipeDetail(weeklyData[day].dinner)}
+                    onPress={() => navigateToRecipeDetail(weeklyData[day].dinner!)}
                   >
                     <Text style={[styles.mealSlotTitle, isDarkMode && styles.textLightSecondary]}>
                       Dinner
                     </Text>
                     <Text style={[styles.mealSlotName, isDarkMode && styles.textLight]}>
-                      {weeklyData[day].dinner.title}
+                      {weeklyData[day].dinner!.title}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -147,7 +147,7 @@ export const MealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
           {mealPlan.meals.map(renderMeal)}
         </View>
       ) : (
-        renderWeeklyPlan((mealPlan as any).weeklyData)
+        renderWeeklyPlan(mealPlan.weeklyData)
       )}
     </ScrollView>
   );
