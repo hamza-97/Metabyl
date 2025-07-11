@@ -26,6 +26,8 @@ import MainTabNavigator from './MainTabNavigator';
 import RecipeDetailScreen from '../screens/recipes/RecipeDetailScreen';
 import WeeklyMealPlanScreen from '../screens/meals/WeeklyMealPlanScreen';
 import ChatbotScreen from '../screens/ChatbotScreen';
+import SettingsScreen from '../screens/profile/SettingsScreen';
+import ConversionTablesScreen from '../screens/profile/ConversionTablesScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -49,6 +51,8 @@ export type RootStackParamList = {
   RecipeDetail: { recipeId: number };
   WeeklyMealPlan: { weeklyPlan: import('../types/mealPlan').WeeklyMealPlan };
   Chatbot: undefined;
+  Settings: undefined;
+  ConversionTables: undefined;
 };
 
 // Main stack param list for screens accessible after onboarding
@@ -89,6 +93,24 @@ const Navigation = () => {
               <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
               <Stack.Screen name="WeeklyMealPlan" component={WeeklyMealPlanScreen} />
               <Stack.Screen name="Chatbot" component={ChatbotScreen} />
+              <Stack.Screen 
+                name="Settings" 
+                component={SettingsScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Settings',
+                  headerTintColor: '#5DB075',
+                }} 
+              />
+              <Stack.Screen 
+                name="ConversionTables" 
+                component={ConversionTablesScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Measurement Conversions',
+                  headerTintColor: '#5DB075',
+                }} 
+              />
             </>
           )}
         </Stack.Navigator>

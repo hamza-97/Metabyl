@@ -2,17 +2,19 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-// Import screens (to be created)
+// Import screens
 import HomeScreen from '../screens/home/HomeScreen';
 import RecipesScreen from '../screens/recipes/RecipesScreen';
 import ShoppingListScreen from '../screens/shoppingList/ShoppingListScreen';
 import ChatbotScreen from '../screens/ChatbotScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
 
 export type MainTabParamList = {
   Home: undefined;
   Recipes: undefined;
   ShoppingList: undefined;
   ChatBot: undefined;
+  Profile: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -33,6 +35,8 @@ const MainTabNavigator = () => {
             iconName = focused ? 'cart' : 'cart-outline';
           } else if (route.name === 'ChatBot') {
             iconName = focused ? 'robot' : 'robot-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'account' : 'account-outline';
           }
 
           return <Icon name={iconName} size={size} color={color} />;
@@ -50,6 +54,10 @@ const MainTabNavigator = () => {
         options={{
           tabBarLabel: 'Food AI',
         }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
       />
     </Tab.Navigator>
   );

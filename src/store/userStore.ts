@@ -17,6 +17,7 @@ interface UserState {
   // Preferences
   dietaryPreference: string | null;
   allergies: string[];
+  measurementUnit: 'metric' | 'imperial';
 
   // Subscription
   isPremium: boolean;
@@ -33,6 +34,7 @@ interface UserState {
   toggleAllergy: (allergyId: string) => void;
   setPremiumStatus: (status: boolean) => void;
   setSubscriptionPlan: (plan: string) => void;
+  setMeasurementUnit: (unit: 'metric' | 'imperial') => void;
   resetUser: () => void;
 }
 
@@ -47,6 +49,7 @@ export const useUserStore = create<UserState>()(
       hasCompletedOnboarding: false,
       dietaryPreference: null,
       allergies: [],
+      measurementUnit: 'metric', // Default to metric
       isPremium: false,
       subscriptionPlan: null,
 
@@ -72,6 +75,7 @@ export const useUserStore = create<UserState>()(
         }),
       setPremiumStatus: status => set({ isPremium: status }),
       setSubscriptionPlan: plan => set({ subscriptionPlan: plan }),
+      setMeasurementUnit: unit => set({ measurementUnit: unit }),
       resetUser: () =>
         set({
           name: null,
@@ -80,6 +84,7 @@ export const useUserStore = create<UserState>()(
           isLoggedIn: false,
           dietaryPreference: null,
           allergies: [],
+          measurementUnit: 'metric',
           isPremium: false,
           subscriptionPlan: null,
         }),

@@ -8,7 +8,7 @@ interface SpoonacularConfig {
 
 export const spoonacularConfig: SpoonacularConfig = {
   baseURL: API_BASE_URL,
-  apiKey: '',
+  apiKey: '1e5bb439a42f4ff1ab1253dd1909d7ed',
 };
 
 // Recipe search parameters
