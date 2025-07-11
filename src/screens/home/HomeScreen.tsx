@@ -146,6 +146,25 @@ const HomeScreen = () => {
           <Text style={styles.createPlanButtonText}>Create Meal Plan</Text>
         </TouchableOpacity>
 
+        {/* Chatbot Access Card */}
+        <TouchableOpacity 
+          style={[styles.chatbotCard, isDarkMode && styles.chatbotCardDark]}
+          onPress={() => navigation.navigate('ChatBot')}
+        >
+          <View style={styles.chatbotIconContainer}>
+            <Icon name="robot" size={28} color="#007AFF" />
+          </View>
+          <View style={styles.chatbotTextContainer}>
+            <Text style={[styles.chatbotTitle, isDarkMode && styles.textLight]}>
+              Food Assistant AI 🤖
+            </Text>
+            <Text style={[styles.chatbotSubtitle, isDarkMode && styles.textLightSecondary]}>
+              Ask about recipes, cooking tips, substitutions & more
+            </Text>
+          </View>
+          <Icon name="chevron-right" size={20} color="#007AFF" />
+        </TouchableOpacity>
+
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>
             {`Today's ${currentMealType}`}
@@ -618,6 +637,48 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 6,
     textTransform: 'uppercase',
+  },
+  // Chatbot card styles
+  chatbotCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
+  },
+  chatbotCardDark: {
+    backgroundColor: '#2A2A2A',
+    borderColor: '#1976D2',
+  },
+  chatbotIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  chatbotTextContainer: {
+    flex: 1,
+  },
+  chatbotTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 2,
+  },
+  chatbotSubtitle: {
+    fontSize: 14,
+    color: '#666666',
   },
 });
 

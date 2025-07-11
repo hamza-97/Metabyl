@@ -25,6 +25,7 @@ import DoctorInfoScreen from '../screens/auth/DoctorInfoScreen';
 import MainTabNavigator from './MainTabNavigator';
 import RecipeDetailScreen from '../screens/recipes/RecipeDetailScreen';
 import WeeklyMealPlanScreen from '../screens/meals/WeeklyMealPlanScreen';
+import ChatbotScreen from '../screens/ChatbotScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -47,6 +48,7 @@ export type RootStackParamList = {
   MainApp: undefined;
   RecipeDetail: { recipeId: number };
   WeeklyMealPlan: { weeklyPlan: import('../types/mealPlan').WeeklyMealPlan };
+  Chatbot: undefined;
 };
 
 // Main stack param list for screens accessible after onboarding
@@ -86,6 +88,7 @@ const Navigation = () => {
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
               <Stack.Screen name="WeeklyMealPlan" component={WeeklyMealPlanScreen} />
+              <Stack.Screen name="Chatbot" component={ChatbotScreen} />
             </>
           )}
         </Stack.Navigator>

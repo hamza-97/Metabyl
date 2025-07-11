@@ -126,6 +126,16 @@ export interface DayNutrients {
   carbohydrates: number;
 }
 
+// Chatbot response types
+export interface ChatbotResponse {
+  answerText: string;
+  media?: Array<{
+    title: string;
+    image?: string;
+    link?: string;
+  }>;
+}
+
 // API Service Class
 class SpoonacularAPI {
   private config: SpoonacularConfig;
@@ -207,6 +217,18 @@ class SpoonacularAPI {
     return this.makeRequest<Recipe>(`/recipes/${id}/information`, {
       includeNutrition: true,
     });
+  }
+
+  // Talk to chatbot
+  async talkToChatbot(
+    text: string,
+    contextId?: string,
+  ): Promise<ChatbotResponse> {
+    const params: any = { text };
+    if (contextId) {
+      params.contextId = contextId;
+    }
+    return this.makeRequest<ChatbotResponse>('/food/converse', params);
   }
 }
 

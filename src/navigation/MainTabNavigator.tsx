@@ -6,11 +6,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import HomeScreen from '../screens/home/HomeScreen';
 import RecipesScreen from '../screens/recipes/RecipesScreen';
 import ShoppingListScreen from '../screens/shoppingList/ShoppingListScreen';
+import ChatbotScreen from '../screens/ChatbotScreen';
 
 export type MainTabParamList = {
   Home: undefined;
   Recipes: undefined;
   ShoppingList: undefined;
+  ChatBot: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -29,6 +31,8 @@ const MainTabNavigator = () => {
             iconName = focused ? 'food' : 'food-outline';
           } else if (route.name === 'ShoppingList') {
             iconName = focused ? 'cart' : 'cart-outline';
+          } else if (route.name === 'ChatBot') {
+            iconName = focused ? 'robot' : 'robot-outline';
           }
 
           return <Icon name={iconName} size={size} color={color} />;
@@ -40,6 +44,13 @@ const MainTabNavigator = () => {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Recipes" component={RecipesScreen} />
       <Tab.Screen name="ShoppingList" component={ShoppingListScreen} />
+      <Tab.Screen 
+        name="ChatBot" 
+        component={ChatbotScreen}
+        options={{
+          tabBarLabel: 'Food AI',
+        }}
+      />
     </Tab.Navigator>
   );
 };
