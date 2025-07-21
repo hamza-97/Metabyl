@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useUserStore } from '../../store/userStore';
+import { DiscountOfferModal } from '../../components/common/DiscountOfferModal';
 
 type SubscriptionPlan = {
   id: string;
@@ -42,6 +43,9 @@ const PaywallScreen = () => {
   const setPremiumStatus = useUserStore((state) => state.setPremiumStatus);
   const setHasCompletedOnboarding = useUserStore((state) => state.setHasCompletedOnboarding);
 
+  // Modal state
+  const [showDiscountOffer, setShowDiscountOffer] = React.useState(false);
+
   // Set default selection to monthly
   React.useEffect(() => {
     if (!subscriptionPlan) {
@@ -56,6 +60,25 @@ const PaywallScreen = () => {
   };
 
   const handleContinueFree = () => {
+    setPremiumStatus(false);
+    setHasCompletedOnboarding(true);
+    // navigation.navigate('MainApp');
+  };
+
+  const handleMaybeLater = () => {
+    setShowDiscountOffer(true);
+  };
+
+  const handleDiscountSubscribe = () => {
+    setShowDiscountOffer(false);
+    setPremiumStatus(true);
+    setHasCompletedOnboarding(true);
+    // navigation.navigate('MainApp');
+  };
+
+  const handleDiscountClose = () => {
+    setShowDiscountOffer(false);
+    // Proceed with free version after closing the offer
     setPremiumStatus(false);
     setHasCompletedOnboarding(true);
     // navigation.navigate('MainApp');
@@ -148,7 +171,7 @@ const PaywallScreen = () => {
             </TouchableOpacity>
 
             {/* Continue Free Button */}
-            <TouchableOpacity style={styles.continueButton} onPress={handleContinueFree}>
+            <TouchableOpacity style={styles.continueButton} onPress={handleMaybeLater}>
               <Text style={styles.continueButtonText}>Maybe Later</Text>
             </TouchableOpacity>
 
@@ -159,6 +182,12 @@ const PaywallScreen = () => {
           </View>
         </ScrollView>
       </ImageBackground>
+      
+      <DiscountOfferModal
+        visible={showDiscountOffer}
+        onSubscribe={handleDiscountSubscribe}
+        onClose={handleDiscountClose}
+      />
     </View>
   );
 };

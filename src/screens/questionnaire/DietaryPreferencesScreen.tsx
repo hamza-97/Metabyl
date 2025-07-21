@@ -52,7 +52,7 @@ const FOOD_ALLERGIES: { id: FoodAllergy; name: string; description: string; icon
 const SwipeToRemoveItem = ({
   allergy,
   onRemove,
-  isDarkMode,
+  isDarkMode: _isDarkMode,
 }: {
   allergy: { id: FoodAllergy; name: string; icon: string; description: string };
   onRemove: () => void;
@@ -79,7 +79,6 @@ const SwipeToRemoveItem = ({
       translateX.value = withTiming(0);
     }
   };
-  console.log("Allergy name is ", allergy)
 
   return (
     <Animated.View
