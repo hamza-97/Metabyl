@@ -74,7 +74,8 @@ export const FinalPersonalizationScreen: React.FC = () => {
   };
 
   const handleContinue = () => {
-    navigation.navigate('FinalPersonalizationTwoScreen');
+    // navigation.navigate('FinalPersonalizationTwoScreen');
+    navigation.navigate('DoctorInfo');
   };
 
   return (

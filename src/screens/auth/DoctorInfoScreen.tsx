@@ -25,7 +25,8 @@ const DoctorInfoScreen = () => {
   const navigation = useNavigation<DoctorInfoNavigationProp>();
 
   const handleContinue = () => {
-    navigation.navigate('AuthChoice');
+    // navigation.navigate('AuthChoice');
+    navigation.navigate('PaywallScreen');
   };
 
   return (

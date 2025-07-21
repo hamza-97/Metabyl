@@ -53,7 +53,8 @@ export const CookingSkillScreen: React.FC = () => {
   };
 
   const handleContinue = () => {
-    navigation.navigate('ShoppingPreferencesScreen');
+    // navigation.navigate('ShoppingPreferencesScreen');
+    navigation.navigate('FinalPersonalizationScreen');
   };
 
   return (
