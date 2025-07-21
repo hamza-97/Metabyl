@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   useColorScheme,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -55,11 +56,12 @@ export const QuestionnaireScreen: React.FC = () => {
   const isDarkMode = useColorScheme() === 'dark';
 
   const handleGetStarted = () => {
-    navigation.navigate('HouseholdSizeScreen');
+    navigation.navigate('HouseholdSetupScreen');
   };
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
+      <ScrollView>
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Icon name="clipboard-text-outline" size={32} color="#5DB075" />
@@ -90,6 +92,8 @@ export const QuestionnaireScreen: React.FC = () => {
         </View>
       </View>
 
+
+      </ScrollView>
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.getStartedButton}
@@ -157,6 +161,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   sectionsList: {
     gap: 15,
@@ -166,9 +174,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    
   },
   sectionCardDark: {
     backgroundColor: '#2A2A2A',

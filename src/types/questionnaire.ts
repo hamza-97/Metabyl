@@ -72,6 +72,7 @@ export interface QuestionnaireResponse {
   // Section 1: Basic Household Setup
   peopleCount: number;
   hasChildren: boolean;
+  childrenCount: number;
 
   // Section 2: Food Preferences & Dietary Needs
   foodAllergies: FoodAllergy[];

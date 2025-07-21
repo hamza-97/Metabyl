@@ -59,6 +59,11 @@ const SplashScreen = () => {
 
   return (
     <View style={[styles.container, isDarkMode && styles.containerDark]}>
+      {/* Green Header */}
+      <View style={styles.greenHeader}>
+        <Text style={styles.greenHeaderText}>Metabyl</Text>
+      </View>
+
       <View style={styles.logoContainer}>
         <Image source={require("../../../assets/img/logo.png")} style={styles.logoStyle} />
       </View>
@@ -133,6 +138,22 @@ const styles = StyleSheet.create({
   },
   containerDark: {
     backgroundColor: '#121212',
+  },
+  greenHeader: {
+    width: '100%',
+    height: 80,
+    backgroundColor: '#5DB075',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    zIndex: 1,
+  },
+  greenHeaderText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    letterSpacing: 2,
   },
   logoContainer: {
     alignItems: 'center',

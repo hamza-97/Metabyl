@@ -8,11 +8,7 @@ import {
   ImageBackground,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { RootStackParamList } from '../../navigation';
 import { useUserStore } from '../../store/userStore';
 
 type SubscriptionPlan = {
@@ -40,8 +36,6 @@ const subscriptionPlans: SubscriptionPlan[] = [
 ];
 
 const PaywallScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
   // Get state and actions from store
   const subscriptionPlan = useUserStore((state) => state.subscriptionPlan);
   const setSubscriptionPlan = useUserStore((state) => state.setSubscriptionPlan);
@@ -84,6 +78,11 @@ const PaywallScreen = () => {
 
         
         <ScrollView contentContainerStyle={styles.safeArea}>
+          {/* Green Header */}
+          <View style={styles.greenHeader}>
+            <Text style={styles.greenHeaderText}>Metabyl</Text>
+          </View>
+
           {/* Close Button */}
           <TouchableOpacity style={styles.closeButton} onPress={handleContinueFree}>
             <Icon name="close" size={24} color="#FFFFFF" />
@@ -184,6 +183,18 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  greenHeader: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  greenHeaderText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   closeButton: {
     position: 'absolute',

@@ -80,6 +80,11 @@ const DietaryPreferencesScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
+      {/* Green Header */}
+      <View style={styles.greenHeader}>
+        <Text style={styles.greenHeaderText}>Metabyl</Text>
+      </View>
+
       <View style={styles.header}>
         <Text style={[styles.title, isDarkMode && styles.textLight]}>
           What's your diet preference?
@@ -143,6 +148,17 @@ const styles = StyleSheet.create({
   },
   containerDark: {
     backgroundColor: '#121212',
+  },
+  greenHeader: {
+    backgroundColor: '#5DB075',
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  greenHeaderText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   header: {
     marginTop: 20,

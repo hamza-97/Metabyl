@@ -148,6 +148,17 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#121212',
   },
+  header: {
+    backgroundColor: '#5DB075',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  headerText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   skipContainer: {
     alignItems: 'flex-end',
     paddingHorizontal: 20,

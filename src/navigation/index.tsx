@@ -10,7 +10,7 @@ import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import DietaryPreferencesScreenOnboarding from '../screens/onboarding/DietaryPreferencesScreen';
 import AllergiesScreen from '../screens/onboarding/AllergiesScreen';
 import { QuestionnaireScreen } from '../screens/QuestionnaireScreen';
-import { HouseholdSizeScreen } from '../screens/questionnaire/HouseholdSizeScreen';
+import { HouseholdSetupScreen } from '../screens/questionnaire/HouseholdSetupScreen';
 import { ChildrenQuestionScreen } from '../screens/questionnaire/ChildrenQuestionScreen';
 import { DietaryPreferencesScreen } from '../screens/questionnaire/DietaryPreferencesScreen';
 import { CookingSkillScreen } from '../screens/questionnaire/CookingSkillScreen';
@@ -35,7 +35,7 @@ export type RootStackParamList = {
   DietaryPreferences: undefined;
   AllergiesScreen: undefined;
   Questionnaire: undefined;
-  HouseholdSizeScreen: undefined;
+  HouseholdSetupScreen: undefined;
   ChildrenQuestionScreen: undefined;
   DietaryPreferencesScreen: undefined;
   CookingSkillScreen: undefined;
@@ -74,7 +74,7 @@ const Navigation = () => {
               <Stack.Screen name="DietaryPreferences" component={DietaryPreferencesScreenOnboarding} />
               <Stack.Screen name="AllergiesScreen" component={AllergiesScreen} />
               <Stack.Screen name="Questionnaire" component={QuestionnaireScreen} />
-              <Stack.Screen name="HouseholdSizeScreen" component={HouseholdSizeScreen} />
+              <Stack.Screen name="HouseholdSetupScreen" component={HouseholdSetupScreen} />
               <Stack.Screen name="ChildrenQuestionScreen" component={ChildrenQuestionScreen} />
               <Stack.Screen name="DietaryPreferencesScreen" component={DietaryPreferencesScreen} />
               <Stack.Screen name="CookingSkillScreen" component={CookingSkillScreen} />

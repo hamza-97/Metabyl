@@ -10,6 +10,7 @@ interface QuestionnaireStore {
 export const initialState: QuestionnaireResponse = {
   peopleCount: 1,
   hasChildren: false,
+  childrenCount: 0,
   foodAllergies: [],
   unwantedFoods: [],
   cookingSkill: 'Beginner',
