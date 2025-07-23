@@ -7,10 +7,13 @@ import {
   StatusBar,
   ImageBackground,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useUserStore } from '../../store/userStore';
 import { DiscountOfferModal } from '../../components/common/DiscountOfferModal';
+import { SUBSCRIPTION_PLANS } from '../../config/iapService';
 
 type SubscriptionPlan = {
   id: string;
@@ -18,23 +21,10 @@ type SubscriptionPlan = {
   price: string;
   period: string;
   isPopular?: boolean;
+  productId: string;
 };
 
-const subscriptionPlans: SubscriptionPlan[] = [
-  {
-    id: 'weekly',
-    name: 'Weekly',
-    price: '$2.99',
-    period: 'per week',
-  },
-  {
-    id: 'monthly',
-    name: 'Monthly',
-    price: '$9.99',
-    period: 'per month',
-    isPopular: true,
-  },
-];
+const subscriptionPlans: SubscriptionPlan[] = SUBSCRIPTION_PLANS;
 
 const PaywallScreen = () => {
   // Get state and actions from store
@@ -42,9 +32,12 @@ const PaywallScreen = () => {
   const setSubscriptionPlan = useUserStore((state) => state.setSubscriptionPlan);
   const setPremiumStatus = useUserStore((state) => state.setPremiumStatus);
   const setHasCompletedOnboarding = useUserStore((state) => state.setHasCompletedOnboarding);
+  const purchaseSubscription = useUserStore((state) => state.purchaseSubscription);
+  const restorePurchases = useUserStore((state) => state.restorePurchases);
 
   // Modal state
   const [showDiscountOffer, setShowDiscountOffer] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   // Set default selection to monthly
   React.useEffect(() => {
@@ -53,10 +46,31 @@ const PaywallScreen = () => {
     }
   }, [subscriptionPlan, setSubscriptionPlan]);
 
-  const handleSubscribe = () => {
-    setPremiumStatus(true);
-    setHasCompletedOnboarding(true);
-    // navigation.navigate('MainApp');
+  const handleSubscribe = async () => {
+    if (!subscriptionPlan) {
+      Alert.alert('Error', 'Please select a subscription plan');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const selectedPlan = subscriptionPlans.find(plan => plan.id === subscriptionPlan);
+      if (!selectedPlan) {
+        Alert.alert('Error', 'Selected plan not found');
+        return;
+      }
+
+      const success = await purchaseSubscription(selectedPlan.productId);
+      if (success) {
+        setHasCompletedOnboarding(true);
+      } else {
+        Alert.alert('Purchase Failed', 'Unable to complete purchase. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred during purchase. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleContinueFree = () => {
@@ -166,8 +180,39 @@ const PaywallScreen = () => {
             </View>
 
             {/* Subscribe Button */}
-            <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
-              <Text style={styles.subscribeButtonText}>Subscribe</Text>
+            <TouchableOpacity 
+              style={[styles.subscribeButton, isLoading && styles.disabledButton]} 
+              onPress={handleSubscribe}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#333333" />
+              ) : (
+                <Text style={styles.subscribeButtonText}>Subscribe</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Restore Purchases Button */}
+            <TouchableOpacity 
+              style={styles.restoreButton} 
+              onPress={async () => {
+                setIsLoading(true);
+                try {
+                  const success = await restorePurchases();
+                  if (success) {
+                    setHasCompletedOnboarding(true);
+                  } else {
+                    Alert.alert('No Purchases Found', 'No previous purchases were found to restore.');
+                  }
+                } catch (error) {
+                  Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              disabled={isLoading}
+            >
+              <Text style={styles.restoreButtonText}>Restore Purchases</Text>
             </TouchableOpacity>
 
             {/* Continue Free Button */}
@@ -394,6 +439,20 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
     lineHeight: 16,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  restoreButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  restoreButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textDecorationLine: 'underline',
   },
 });
 

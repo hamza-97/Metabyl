@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import IAPService from '../config/iapService';
 
 interface UserState {
   // User profile
@@ -36,6 +37,9 @@ interface UserState {
   setSubscriptionPlan: (plan: string) => void;
   setMeasurementUnit: (unit: 'metric' | 'imperial') => void;
   resetUser: () => void;
+  checkSubscriptionStatus: () => Promise<void>;
+  purchaseSubscription: (productId: string) => Promise<boolean>;
+  restorePurchases: () => Promise<boolean>;
 }
 
 export const useUserStore = create<UserState>()(
@@ -76,6 +80,57 @@ export const useUserStore = create<UserState>()(
       setPremiumStatus: status => set({ isPremium: status }),
       setSubscriptionPlan: plan => set({ subscriptionPlan: plan }),
       setMeasurementUnit: unit => set({ measurementUnit: unit }),
+      checkSubscriptionStatus: async () => {
+        try {
+          const hasActiveSubscription =
+            await IAPService.checkIfUserHasActiveSubscription();
+          const activePlan = await IAPService.getActiveSubscriptionPlan();
+
+          set({
+            isPremium: hasActiveSubscription,
+            subscriptionPlan: activePlan,
+          });
+        } catch (error) {
+          console.error('Failed to check subscription status:', error);
+        }
+      },
+      purchaseSubscription: async (productId: string) => {
+        try {
+          const success = await IAPService.purchaseSubscription(productId);
+          if (success) {
+            const activePlan = await IAPService.getActiveSubscriptionPlan();
+            set({
+              isPremium: true,
+              subscriptionPlan: activePlan,
+            });
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Failed to purchase subscription:', error);
+          return false;
+        }
+      },
+      restorePurchases: async () => {
+        try {
+          const success = await IAPService.restorePurchases();
+          if (success) {
+            const hasActiveSubscription =
+              await IAPService.checkIfUserHasActiveSubscription();
+            const activePlan = await IAPService.getActiveSubscriptionPlan();
+
+            set({
+              isPremium: hasActiveSubscription,
+              subscriptionPlan: activePlan,
+            });
+            return hasActiveSubscription;
+          }
+          return false;
+        } catch (error) {
+          console.error('Failed to restore purchases:', error);
+          return false;
+        }
+      },
       resetUser: () =>
         set({
           name: null,

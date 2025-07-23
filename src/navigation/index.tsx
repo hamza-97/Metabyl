@@ -28,6 +28,7 @@ import WeeklyMealPlanScreen from '../screens/meals/WeeklyMealPlanScreen';
 import ChatbotScreen from '../screens/ChatbotScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
 import ConversionTablesScreen from '../screens/profile/ConversionTablesScreen';
+import SubscriptionScreen from '../screens/profile/SubscriptionScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -53,6 +54,7 @@ export type RootStackParamList = {
   Chatbot: undefined;
   Settings: undefined;
   ConversionTables: undefined;
+  Subscription: undefined;
 };
 
 // Main stack param list for screens accessible after onboarding
@@ -108,6 +110,15 @@ const Navigation = () => {
                 options={{
                   headerShown: true,
                   title: 'Measurement Conversions',
+                  headerTintColor: '#5DB075',
+                }} 
+              />
+              <Stack.Screen 
+                name="Subscription" 
+                component={SubscriptionScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Subscription',
                   headerTintColor: '#5DB075',
                 }} 
               />

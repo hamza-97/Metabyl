@@ -80,6 +80,7 @@ const SettingsScreen = () => {
           subtitle: 'Manage your subscription',
           icon: 'crown',
           type: 'navigation',
+          onPress: () => navigation.navigate('Subscription' as never),
         },
         {
           id: 'privacy',

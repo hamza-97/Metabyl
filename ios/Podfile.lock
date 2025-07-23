@@ -8,6 +8,8 @@ PODS:
   - hermes-engine (0.80.0):
     - hermes-engine/Pre-built (= 0.80.0)
   - hermes-engine/Pre-built (0.80.0)
+  - PurchasesHybridCommon (15.0.0):
+    - RevenueCat (= 5.33.0)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -2271,6 +2273,7 @@ PODS:
     - React-perflogger (= 0.80.0)
     - React-utils (= 0.80.0)
     - SocketRocket
+  - RevenueCat (5.33.0)
   - RNCAsyncStorage (2.2.0):
     - boost
     - DoubleConversion
@@ -2329,6 +2332,15 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNIap (13.0.2):
+    - RCT-Folly
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - ReactCommon/turbomodule/core
+  - RNPurchases (9.0.0):
+    - PurchasesHybridCommon (= 15.0.0)
+    - React-Core
   - RNReanimated (3.18.0):
     - boost
     - DoubleConversion
@@ -2648,6 +2660,8 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNIap (from `../node_modules/react-native-iap`)
+  - RNPurchases (from `../node_modules/react-native-purchases`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
@@ -2656,6 +2670,8 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - PurchasesHybridCommon
+    - RevenueCat
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -2810,6 +2826,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNIap:
+    :path: "../node_modules/react-native-iap"
+  RNPurchases:
+    :path: "../node_modules/react-native-purchases"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -2827,6 +2847,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 7068e976238b29e97b3bafd09a994542af7d5c0b
+  PurchasesHybridCommon: 18b65ad813f50460d4af7e033abb5cc44a686a6f
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: ff787f6c860a1b97dd1bc27264b61d23ad1994da
   RCTRequired: 664eb8399ed8a83e26ab65af7c2ad390f7e61696
@@ -2893,8 +2914,11 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: cd55f820247d424280ae0b94e1ffb38963410c01
   ReactCodegen: 304f881dea867b659e4ba479608ec06f8117e0c5
   ReactCommon: 658874decaf8c4fd76cfa3a878b94a869db85b1c
+  RevenueCat: 9fd6fc0ea8a22fd9d11242feb298f3bb6f9f86db
   RNCAsyncStorage: 767abb068db6ad28b5f59a129fbc9fab18b377e2
   RNGestureHandler: c202f13fa95347076d8aca4ccb61739b067396cb
+  RNIap: 238df72440e0364b86a5748c2413ac3d2b5a25e3
+  RNPurchases: 1d555b3503e8a79378632c2dc73fa8f229faa1ce
   RNReanimated: 2010262133feb53009f16faaa404042eed7da018
   RNScreens: 56beb7c3cdb9f2b81e60add3bccb483d75fb5773
   RNVectorIcons: 417c003b0ce7ac7748aa548720fd7127d1d74ded

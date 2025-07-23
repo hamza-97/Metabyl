@@ -2529,6 +2529,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@revenuecat/purchases-typescript-internal@npm:15.0.0":
+  version: 15.0.0
+  resolution: "@revenuecat/purchases-typescript-internal@npm:15.0.0"
+  checksum: 8dcd89bcfe59b645508645f9b236a1edd25cc023e7540a78e57e658bdd02f64ccc8c078df84f99c9e7b9b67466939889b36d79397268bb6ad042659f2021725f
+  languageName: node
+  linkType: hard
+
 "@sideway/address@npm:^4.1.5":
   version: 4.1.5
   resolution: "@sideway/address@npm:4.1.5"
@@ -2987,6 +2994,8 @@ __metadata:
     react: 19.1.0
     react-native: 0.80.0
     react-native-gesture-handler: ^2.25.0
+    react-native-iap: ^13.0.2
+    react-native-purchases: ^9.0.0
     react-native-reanimated: ^3.18.0
     react-native-redash: ^18.1.3
     react-native-safe-area-context: ^5.4.1
@@ -7944,6 +7953,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-iap@npm:^13.0.2":
+  version: 13.0.2
+  resolution: "react-native-iap@npm:13.0.2"
+  peerDependencies:
+    expo: ">=47.0.0"
+    react: ">=16.13.1"
+    react-native: ">=0.65.1"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: c5395df21412853344c1ca4a3308540b9d73bbe5bca5c83de6bc79a006e11ff987201c493563e8bc219ecdcbd9b05342d7f02a84d5c6adf4144224bf6f4b9665
+  languageName: node
+  linkType: hard
+
 "react-native-is-edge-to-edge@npm:1.1.7, react-native-is-edge-to-edge@npm:^1.1.7":
   version: 1.1.7
   resolution: "react-native-is-edge-to-edge@npm:1.1.7"
@@ -7951,6 +7974,22 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 4cdf2b2fb5b131f2015c26d2cb7688b4a0c5f3c8474b1bf0ddfa9eabb0263df440c87262ae8f812a6ecab0d5310df0373bddad4b51f53dabb2ffee01e9ef0f44
+  languageName: node
+  linkType: hard
+
+"react-native-purchases@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "react-native-purchases@npm:9.0.0"
+  dependencies:
+    "@revenuecat/purchases-typescript-internal": 15.0.0
+  peerDependencies:
+    react: ">= 16.6.3"
+    react-native: ">= 0.73.0"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: b60ebb5f078d8b8996bdbbbf61dd78755b874f633bbff554b1f039b56d1309c8e60dc995dfac04647ad73f0ca13401308efa7e04ce56bb30189856fa628109fb
   languageName: node
   linkType: hard
 
