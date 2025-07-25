@@ -14,6 +14,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useQuestionnaireStore } from '../../store/questionnaireStore';
 import { useUserStore } from '../../store/userStore';
+import GeminiService from '../../config/geminiApi';
 
 interface Props {
   visible: boolean;
@@ -82,17 +83,7 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
 
     console.log("api inpute is asdfjia lsdfja;s ", apiInput)
     try {
-      const response = await fetch('http://localhost:9002/api/genkit/generate-meal-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: apiInput })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
+      const result = await GeminiService.generateMealPlan(apiInput);
       console.log('LLM response:', result);
 
       if (result?.mealPlan?.length > 0) {
@@ -176,8 +167,8 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
     } catch (error) {
       console.error('API Error:', error);
       Alert.alert(
-        'Connection Error',
-        'Cannot connect to the meal planning service. Make sure your server is running on http://localhost:9002'
+        'Generation Error',
+        'Failed to generate meal plan. Please try again.'
       );
     } finally {
       setIsLoading(false);

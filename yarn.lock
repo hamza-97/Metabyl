@@ -1496,6 +1496,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@google/generative-ai@npm:^0.24.1":
+  version: 0.24.1
+  resolution: "@google/generative-ai@npm:0.24.1"
+  checksum: d999b98acf1a6dba36a3e3693e02fde270c21b8d20333e2d458cf085e90508b24fad6c8d05d9475817fdf9d1ff1bf4082c86a4b09d2e59af739d391e59bca7ed
+  languageName: node
+  linkType: hard
+
 "@gorhom/bottom-sheet@npm:^5.1.6":
   version: 5.1.6
   resolution: "@gorhom/bottom-sheet@npm:5.1.6"
@@ -2970,6 +2977,7 @@ __metadata:
     "@babel/core": ^7.25.2
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
+    "@google/generative-ai": ^0.24.1
     "@gorhom/bottom-sheet": ^5.1.6
     "@react-native-async-storage/async-storage": ^2.2.0
     "@react-native-community/cli": 19.0.0

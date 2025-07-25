@@ -12,6 +12,11 @@ export const ENVIRONMENT = {
     },
   },
 
+  // AI Configuration
+  AI: {
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || 'YOUR_GEMINI_API_KEY',
+  },
+
   // App Configuration
   APP: {
     NAME: 'Metabyl',
@@ -36,6 +41,11 @@ export const ENVIRONMENT = {
 // Helper function to get IAP product IDs
 export const getIAPProductIds = () => {
   return ENVIRONMENT.IAP.PRODUCT_IDS;
+};
+
+// Helper function to get Gemini API key
+export const getGeminiApiKey = () => {
+  return ENVIRONMENT.AI.GEMINI_API_KEY;
 };
 
 // Helper function to check if purchases are enabled
