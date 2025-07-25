@@ -1,9 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getGeminiApiKey } from './environment';
 
 // Initialize Gemini API
-const genAI = new GoogleGenerativeAI('AIzaSyASE0zWlyuFgWO7w47T-lTB78pihnpnYZA');
-// const genAI = new GoogleGenerativeAI(getGeminiApiKey());
+
+const genAI = new GoogleGenerativeAI(getGeminiApiKey());
 
 export interface MealPlanInput {
   dietaryRequirements: string;
@@ -96,10 +95,17 @@ export class GeminiService {
       const prompt = this.buildMealPlanPrompt(input);
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
-      console.log('respone of api is ', response);
+      console.log('response of api is ', response);
       const text = response.text();
+
+      // Extract JSON from the response text
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in response');
+      }
+
       // Parse the JSON response
-      const parsed = JSON.parse(text);
+      const parsed = JSON.parse(jsonMatch[0]);
       return parsed;
     } catch (error) {
       console.error('Failed to generate meal plan:', error);
@@ -117,8 +123,14 @@ export class GeminiService {
       const response = await result.response;
       const text = response.text();
 
+      // Extract JSON from the response text
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in response');
+      }
+
       // Parse the JSON response
-      const parsed = JSON.parse(text);
+      const parsed = JSON.parse(jsonMatch[0]);
       return {
         id: recipeId,
         ...parsed,
@@ -130,8 +142,9 @@ export class GeminiService {
   }
 
   private buildMealPlanPrompt(input: MealPlanInput): string {
-    return `
-Generate a 7-day meal plan as JSON with the following structure:
+    return `You are a meal planning assistant. Generate a 7-day meal plan and return ONLY valid JSON without any additional text, markdown formatting, or explanations.
+
+Return exactly this JSON structure:
 
 {
   "mealPlan": [
@@ -147,8 +160,28 @@ Generate a 7-day meal plan as JSON with the following structure:
           "fat": "8g"
         }
       },
-      "lunch": { /* same structure */ },
-      "dinner": { /* same structure */ }
+      "lunch": {
+        "name": "Meal Name",
+        "description": "Short description",
+        "ingredients": [{"name": "ingredient", "quantity": "amount"}],
+        "nutritionalInfo": {
+          "calories": 500,
+          "protein": "25g",
+          "carbohydrates": "60g",
+          "fat": "20g"
+        }
+      },
+      "dinner": {
+        "name": "Meal Name",
+        "description": "Short description",
+        "ingredients": [{"name": "ingredient", "quantity": "amount"}],
+        "nutritionalInfo": {
+          "calories": 600,
+          "protein": "30g",
+          "carbohydrates": "70g",
+          "fat": "25g"
+        }
+      }
     }
   ],
   "nutritionalBreakdown": {
@@ -171,13 +204,13 @@ User Preferences:
 - Cuisine Preferences: ${input.cuisinePreferences || 'Any'}
 - Family Preferences: ${input.familyPreferences || 'None'}
 
-Generate a complete 7-day meal plan with varied, healthy meals. Ensure all nutritional information is realistic and the shopping list includes all necessary ingredients.
-`;
+Generate a complete 7-day meal plan with varied, healthy meals. Ensure all nutritional information is realistic and the shopping list includes all necessary ingredients. Return ONLY the JSON object, no other text.`;
   }
 
   private buildRecipeDetailPrompt(recipeTitle: string): string {
-    return `
-Generate a detailed recipe for "${recipeTitle}" as JSON with the following structure:
+    return `You are a recipe assistant. Generate a detailed recipe for "${recipeTitle}" and return ONLY valid JSON without any additional text, markdown formatting, or explanations.
+
+Return exactly this JSON structure:
 
 {
   "title": "${recipeTitle}",
@@ -218,8 +251,7 @@ Generate a realistic, detailed recipe with:
 - Dietary tags based on the recipe
 - A health score (0-100)
 
-Make sure the recipe is practical and can actually be cooked at home.
-`;
+Make sure the recipe is practical and can actually be cooked at home. Return ONLY the JSON object, no other text.`;
   }
 }
 

@@ -8,7 +8,9 @@ interface MealPlanState {
   addMealPlan: (mealPlan: GeneratedMealPlan) => void;
   removeMealPlan: (index: number) => void;
   clearMealPlans: () => void;
-  getMealPlansByType: (type: 'single' | 'weekly') => GeneratedMealPlan[];
+  getMealPlansByType: (
+    type: 'single' | 'weekly' | 'comprehensive',
+  ) => GeneratedMealPlan[];
 }
 
 export const useMealPlanStore = create<MealPlanState>()(
@@ -28,7 +30,7 @@ export const useMealPlanStore = create<MealPlanState>()(
 
       clearMealPlans: () => set({ mealPlans: [] }),
 
-      getMealPlansByType: (type: 'single' | 'weekly') => {
+      getMealPlansByType: (type: 'single' | 'weekly' | 'comprehensive') => {
         const { mealPlans } = get();
         return mealPlans.filter(plan => plan.type === type);
       },

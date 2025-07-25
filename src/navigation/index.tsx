@@ -25,6 +25,7 @@ import DoctorInfoScreen from '../screens/auth/DoctorInfoScreen';
 import MainTabNavigator from './MainTabNavigator';
 import RecipeDetailScreen from '../screens/recipes/RecipeDetailScreen';
 import WeeklyMealPlanScreen from '../screens/meals/WeeklyMealPlanScreen';
+import ComprehensiveMealPlanScreen from '../screens/meals/ComprehensiveMealPlanScreen';
 import ChatbotScreen from '../screens/ChatbotScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
 import ConversionTablesScreen from '../screens/profile/ConversionTablesScreen';
@@ -51,6 +52,7 @@ export type RootStackParamList = {
   MainApp: undefined;
   RecipeDetail: { recipeId: number };
   WeeklyMealPlan: { weeklyPlan: import('../types/mealPlan').WeeklyMealPlan };
+  ComprehensiveMealPlan: { mealPlan: import('../types/mealPlan').ComprehensiveMealPlan };
   Chatbot: undefined;
   Settings: undefined;
   ConversionTables: undefined;
@@ -94,6 +96,7 @@ const Navigation = () => {
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
               <Stack.Screen name="WeeklyMealPlan" component={WeeklyMealPlanScreen} />
+              <Stack.Screen name="ComprehensiveMealPlan" component={ComprehensiveMealPlanScreen} />
               <Stack.Screen name="Chatbot" component={ChatbotScreen} />
               <Stack.Screen 
                 name="Settings" 

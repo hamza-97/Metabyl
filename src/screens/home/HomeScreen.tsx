@@ -44,8 +44,8 @@ const HomeScreen = () => {
     navigation.navigate('Recipes');
   };
 
-  const navigateToWeeklyMealPlan = (weeklyPlan: any) => {
-    navigation.navigate('WeeklyMealPlan', { weeklyPlan });
+  const navigateToComprehensiveMealPlan = (mealPlan: any) => {
+    navigation.navigate('ComprehensiveMealPlan', { mealPlan });
   };
 
   // Function to get meal type based on current time
@@ -56,68 +56,7 @@ const HomeScreen = () => {
     return 'Dinner';
   };
 
-  // Function to get next meal from weekly plan
-  const getNextMealFromWeeklyPlan = () => {
-    const weeklyPlan = mealPlans.find(plan => plan.type === 'weekly');
-    if (!weeklyPlan || weeklyPlan.type !== 'weekly') return null;
-    
-    // Type assertion after checking - use any to avoid import issues
-    const typedWeeklyPlan = weeklyPlan as any;
-    if (!typedWeeklyPlan.weeklyData) return null;
-
-    const today = new Date();
-    const currentHour = today.getHours();
-    const currentMinute = today.getMinutes();
-    const currentTime = currentHour * 60 + currentMinute;
-    
-    // Meal times in minutes from midnight
-    const breakfastTime = 8 * 60; // 8:00 AM
-    const lunchTime = 12 * 60 + 30; // 12:30 PM  
-    const dinnerTime = 19 * 60; // 7:00 PM
-    
-    // Get current day of week (0 = Sunday, 1 = Monday, etc.)
-    const dayOfWeek = today.getDay();
-    const mondayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday = 0 index
-    
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    const currentDay = days[mondayIndex];
-    
-    // Determine next meal
-    let nextMealType;
-    let nextMealDay = currentDay;
-    
-    if (currentTime < breakfastTime) {
-      nextMealType = 'breakfast';
-    } else if (currentTime < lunchTime) {
-      nextMealType = 'lunch';
-    } else if (currentTime < dinnerTime) {
-      nextMealType = 'dinner';
-    } else {
-      // After dinner, next meal is tomorrow's breakfast
-      nextMealType = 'breakfast';
-      const nextDayIndex = (mondayIndex + 1) % 7;
-      nextMealDay = days[nextDayIndex];
-    }
-    
-    // Get the meal from weekly plan
-    const dayMeals = typedWeeklyPlan.weeklyData[nextMealDay];
-    if (!dayMeals) return null;
-    
-    const nextMeal = dayMeals[nextMealType as keyof typeof dayMeals];
-    if (!nextMeal) return null;
-    
-    return {
-      meal: nextMeal,
-      mealType: nextMealType,
-      isNextDay: nextMealDay !== currentDay
-    };
-  };
-
-  const nextMealInfo = getNextMealFromWeeklyPlan();
-  const currentMealType = nextMealInfo ? 
-    (nextMealInfo.mealType.charAt(0).toUpperCase() + nextMealInfo.mealType.slice(1)) + 
-    (nextMealInfo.isNextDay ? ' (Tomorrow)' : '') : 
-    getMealTypeForCurrentTime();
+  const currentMealType = getMealTypeForCurrentTime();
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
@@ -184,25 +123,50 @@ const HomeScreen = () => {
         ) : (
           <View style={styles.mealPlansContainer}>
             {(() => {
-              // Show next meal from weekly plan if available, otherwise show single meal
-              const displayMeal = nextMealInfo ? nextMealInfo.meal : 
-                (mealPlans.find(plan => plan.type === 'single')?.meals?.[0] || null);
-              const displayPlan = nextMealInfo ? mealPlans.find(plan => plan.type === 'weekly') :
-                mealPlans.find(plan => plan.type === 'single');
+              // Show next meal from comprehensive plan if available
+              const comprehensivePlan = mealPlans.find(plan => plan.type === 'comprehensive');
+              if (!comprehensivePlan || comprehensivePlan.type !== 'comprehensive') return null;
               
-              if (!displayMeal || !displayPlan) return null;
+              // Get today's meals from the comprehensive plan
+              const today = new Date();
+              const dayOfWeek = today.getDay();
+              const mondayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday = 0 index
               
-              const healthScore = displayMeal && 'healthScore' in displayMeal ? (displayMeal.healthScore as number) : undefined;
+              // Get current meal type based on time
+              const currentHour = today.getHours();
+              let mealType = 'dinner';
+              if (currentHour < 11) mealType = 'breakfast';
+              else if (currentHour < 16) mealType = 'lunch';
+              
+              const todayMeals = comprehensivePlan.mealPlan[mondayIndex];
+              if (!todayMeals) return null;
+              
+              const displayMeal = todayMeals[mealType as keyof typeof todayMeals];
+              if (!displayMeal) return null;
+              
+              // Create a display meal object that matches the expected structure
+              const displayMealObj = {
+                id: Date.now(),
+                title: displayMeal.name,
+                image: displayMeal.imageUrl || '',
+                readyInMinutes: 30,
+                servings: 2,
+                summary: displayMeal.description,
+                ingredients: displayMeal.ingredients,
+                nutritionalInfo: displayMeal.nutritionalInfo,
+              };
+              
+              const healthScore = displayMealObj && 'healthScore' in displayMealObj ? (displayMealObj.healthScore as number) : undefined;
               
               return (
                 <TouchableOpacity 
                   key="next-meal" 
                   style={styles.mealPlanCard}
-                  onPress={() => navigateToRecipeDetail(displayMeal.id)}
+                  onPress={() => navigateToRecipeDetail(displayMealObj.id)}
                 >
-                  {displayMeal.image ? (
+                  {displayMealObj.image ? (
                     <Image 
-                      source={{uri: displayMeal.image}} 
+                      source={{uri: displayMealObj.image}} 
                       style={styles.mealImage}
                       resizeMode="cover"
                     />
@@ -215,43 +179,38 @@ const HomeScreen = () => {
                   <View style={styles.mealInfoContainer}>
                     <View style={styles.mealTitleContainer}>
                       <Text style={[styles.mealTitle, isDarkMode && styles.textLight]} numberOfLines={2}>
-                        {displayMeal.title}
+                        {displayMealObj.title}
                       </Text>
                       
                       <View style={styles.mealBadge}>
                         <Text style={styles.mealBadgeText}>
-                          {nextMealInfo ? 
-                            (nextMealInfo.mealType.charAt(0).toUpperCase() + nextMealInfo.mealType.slice(1)) : 
-                            currentMealType
-                          }
+                          {currentMealType}
                         </Text>
                       </View>
                     </View>
                     
-                    <View style={styles.mealMetaContainer}>
-                      <View style={styles.mealMetaItem}>
-                        <Icon name="clock-outline" size={16} color={isDarkMode ? '#AAAAAA' : '#666666'} />
-                        <Text style={[styles.mealMetaText, isDarkMode && styles.textLightSecondary]}>
-                          {displayMeal.readyInMinutes} mins
-                        </Text>
+                                          <View style={styles.mealMetaContainer}>
+                        <View style={styles.mealMetaItem}>
+                          <Icon name="clock-outline" size={16} color={isDarkMode ? '#AAAAAA' : '#666666'} />
+                          <Text style={[styles.mealMetaText, isDarkMode && styles.textLightSecondary]}>
+                            {displayMealObj.readyInMinutes} mins
+                          </Text>
+                        </View>
+                        
+                        <View style={styles.mealMetaItem}>
+                          <Icon name="account-group-outline" size={16} color={isDarkMode ? '#AAAAAA' : '#666666'} />
+                          <Text style={[styles.mealMetaText, isDarkMode && styles.textLightSecondary]}>
+                            {displayMealObj.servings} {displayMealObj.servings > 1 ? 'people' : 'person'}
+                          </Text>
+                        </View>
                       </View>
-                      
-                      <View style={styles.mealMetaItem}>
-                        <Icon name="account-group-outline" size={16} color={isDarkMode ? '#AAAAAA' : '#666666'} />
-                        <Text style={[styles.mealMetaText, isDarkMode && styles.textLightSecondary]}>
-                          {displayMeal.servings} {displayMeal.servings > 1 ? 'people' : 'person'}
-                        </Text>
-                      </View>
-                    </View>
                     
-                    {nextMealInfo && (
-                      <View style={styles.nextMealIndicator}>
-                        <Icon name="clock-fast" size={16} color="#007AFF" />
-                        <Text style={styles.nextMealText}>
-                          Next meal {nextMealInfo.isNextDay ? 'tomorrow' : 'today'}
-                        </Text>
-                      </View>
-                    )}
+                    <View style={styles.nextMealIndicator}>
+                      <Icon name="clock-fast" size={16} color="#007AFF" />
+                      <Text style={styles.nextMealText}>
+                        Today's meal
+                      </Text>
+                    </View>
                     
                     {healthScore !== undefined && (
                       <View style={styles.healthScoreContainer}>
@@ -274,7 +233,7 @@ const HomeScreen = () => {
                     
                     <TouchableOpacity 
                       style={styles.viewRecipeButton}
-                      onPress={() => navigateToRecipeDetail(displayMeal.id)}
+                      onPress={() => navigateToRecipeDetail(displayMealObj.id)}
                     >
                       <Text style={styles.viewRecipeButtonText}>View Recipe</Text>
                       <Icon name="chevron-right" size={16} color="#5DB075" />
@@ -286,20 +245,20 @@ const HomeScreen = () => {
           </View>
         )}
 
-        {/* Weekly Meal Plan Section */}
-        {mealPlans.find(plan => plan.type === 'weekly') && (
+        {/* Comprehensive Meal Plan Section */}
+        {mealPlans.find(plan => plan.type === 'comprehensive') && (
           <>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>
-                Your 7-Day Plan
+                Your Meal Plan
               </Text>
             </View>
 
             <TouchableOpacity 
               style={[styles.weeklyPlanCard, isDarkMode && styles.weeklyPlanCardDark]}
               onPress={() => {
-                const weeklyPlan = mealPlans.find(plan => plan.type === 'weekly');
-                if (weeklyPlan) navigateToWeeklyMealPlan(weeklyPlan);
+                const comprehensivePlan = mealPlans.find(plan => plan.type === 'comprehensive');
+                if (comprehensivePlan) navigateToComprehensiveMealPlan(comprehensivePlan);
               }}
             >
               <View style={styles.weeklyPlanHeader}>
@@ -308,12 +267,12 @@ const HomeScreen = () => {
                 </View>
                 <View style={styles.weeklyPlanInfo}>
                   <Text style={[styles.weeklyPlanTitle, isDarkMode && styles.textLight]}>
-                    7-Day Meal Plan
+                    Complete Meal Plan
                   </Text>
                   <Text style={[styles.weeklyPlanSubtitle, isDarkMode && styles.textLightSecondary]}>
                     {(() => {
-                      const weeklyPlan = mealPlans.find(plan => plan.type === 'weekly');
-                      return weeklyPlan ? `Generated ${new Date(weeklyPlan.generatedAt).toLocaleDateString()}` : '';
+                      const comprehensivePlan = mealPlans.find(plan => plan.type === 'comprehensive');
+                      return comprehensivePlan ? `Generated ${new Date(comprehensivePlan.generatedAt).toLocaleDateString()}` : '';
                     })()}
                   </Text>
                 </View>
@@ -322,7 +281,7 @@ const HomeScreen = () => {
               
               <View style={styles.weeklyPlanPreview}>
                 <Text style={[styles.weeklyPlanPreviewText, isDarkMode && styles.textLightSecondary]}>
-                  21 meals planned • Breakfast, Lunch & Dinner for 7 days
+                  21 meals planned • Nutrition & Shopping list included
                 </Text>
               </View>
             </TouchableOpacity>

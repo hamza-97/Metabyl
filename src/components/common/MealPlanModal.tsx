@@ -87,78 +87,21 @@ export const MealPlanModal: React.FC<Props> = ({ visible, onClose, onMealPlanGen
       console.log('LLM response:', result);
 
       if (result?.mealPlan?.length > 0) {
-        // Transform for daily plan
-        if (planDuration === 'Daily') {
-          const firstDay = result.mealPlan[0];
-          const mealPlan = {
-            type: 'single',
-            meals: [{
-              id: Date.now().toString(),
-              title: firstDay.dinner?.name || 'Generated Meal',
-              image: firstDay.dinner?.imageUrl || '',
-              readyInMinutes: 30,
-              servings: responses.peopleCount || 2,
-              summary: firstDay.dinner?.description || '',
-              ingredients: firstDay.dinner?.ingredients || [],
-              nutritionalInfo: firstDay.dinner?.nutritionalInfo || {},
-            }],
-            generatedAt: new Date().toISOString(),
-            servings: responses.peopleCount || 2,
-          };
-          onMealPlanGenerated?.(mealPlan);
-        } else {
-          // Transform for weekly plan
-          const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-          const weeklyData: any = {};
-
-          result.mealPlan.forEach((dayPlan: any, index: number) => {
-            const dayName = days[index];
-            if (dayName && dayPlan) {
-              weeklyData[dayName] = {
-                breakfast: {
-                  id: `${dayName}-breakfast-${Date.now()}`,
-                  title: dayPlan.breakfast?.name || 'Breakfast',
-                  image: dayPlan.breakfast?.imageUrl || '',
-                  readyInMinutes: 20,
-                  servings: responses.peopleCount || 2,
-                  summary: dayPlan.breakfast?.description || '',
-                  ingredients: dayPlan.breakfast?.ingredients || [],
-                  nutritionalInfo: dayPlan.breakfast?.nutritionalInfo || {},
-                },
-                lunch: {
-                  id: `${dayName}-lunch-${Date.now()}`,
-                  title: dayPlan.lunch?.name || 'Lunch',
-                  image: dayPlan.lunch?.imageUrl || '',
-                  readyInMinutes: 25,
-                  servings: responses.peopleCount || 2,
-                  summary: dayPlan.lunch?.description || '',
-                  ingredients: dayPlan.lunch?.ingredients || [],
-                  nutritionalInfo: dayPlan.lunch?.nutritionalInfo || {},
-                },
-                dinner: {
-                  id: `${dayName}-dinner-${Date.now()}`,
-                  title: dayPlan.dinner?.name || 'Dinner',
-                  image: dayPlan.dinner?.imageUrl || '',
-                  readyInMinutes: 35,
-                  servings: responses.peopleCount || 2,
-                  summary: dayPlan.dinner?.description || '',
-                  ingredients: dayPlan.dinner?.ingredients || [],
-                  nutritionalInfo: dayPlan.dinner?.nutritionalInfo || {},
-                },
-              };
-            }
-          });
-
-          const weeklyPlan = {
-            type: 'weekly',
-            weeklyData,
-            generatedAt: new Date().toISOString(),
-            servings: responses.peopleCount || 2,
-            nutritionalBreakdown: result.nutritionalBreakdown,
-            shoppingList: result.shoppingList,
-          };
-          onMealPlanGenerated?.(weeklyPlan);
-        }
+        // Create comprehensive meal plan
+        const comprehensivePlan = {
+          type: 'comprehensive' as const,
+          mealPlan: result.mealPlan,
+          nutritionalBreakdown: result.nutritionalBreakdown,
+          shoppingList: result.shoppingList,
+          generatedAt: new Date().toISOString(),
+          userPreferences: {
+            dietaryRequirements: apiInput.dietaryRequirements,
+            availableIngredients: apiInput.availableIngredients,
+            cuisinePreferences: apiInput.cuisinePreferences,
+            familyPreferences: apiInput.familyPreferences,
+          },
+        };
+        onMealPlanGenerated?.(comprehensivePlan);
 
         onClose();
       } else {

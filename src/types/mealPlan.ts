@@ -11,6 +11,41 @@ export interface SingleMealRequest {
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'any';
 }
 
+// New API Response Types
+export interface Meal {
+  name: string;
+  description: string;
+  ingredients: Array<{ name: string; quantity: string }>;
+  nutritionalInfo: {
+    calories: number;
+    protein: string;
+    carbohydrates: string;
+    fat: string;
+  };
+  imageUrl?: string;
+}
+
+export interface DailyPlan {
+  breakfast: Meal;
+  lunch: Meal;
+  dinner: Meal;
+}
+
+export interface MealPlanOutput {
+  mealPlan: DailyPlan[];
+  nutritionalBreakdown: {
+    summary: string;
+    calories: number;
+    macros: {
+      protein: string;
+      carbohydrates: string;
+      fat: string;
+    };
+  };
+  shoppingList: Array<{ name: string; quantity: string; category: string }>;
+}
+
+// Legacy types for backward compatibility
 export interface GeneratedMeal {
   id: number;
   title: string;
@@ -51,6 +86,32 @@ export interface WeeklyMealPlan {
   servings?: number;
 }
 
-export type GeneratedMealPlan = SingleMealPlan | WeeklyMealPlan;
+// New comprehensive meal plan type
+export interface ComprehensiveMealPlan {
+  type: 'comprehensive';
+  mealPlan: DailyPlan[];
+  nutritionalBreakdown: {
+    summary: string;
+    calories: number;
+    macros: {
+      protein: string;
+      carbohydrates: string;
+      fat: string;
+    };
+  };
+  shoppingList: Array<{ name: string; quantity: string; category: string }>;
+  generatedAt: string;
+  userPreferences?: {
+    dietaryRequirements: string;
+    availableIngredients?: string;
+    cuisinePreferences?: string;
+    familyPreferences?: string;
+  };
+}
+
+export type GeneratedMealPlan =
+  | SingleMealPlan
+  | WeeklyMealPlan
+  | ComprehensiveMealPlan;
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'any';
