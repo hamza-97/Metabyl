@@ -36,8 +36,12 @@ const HomeScreen = () => {
     addMealPlan(mealPlan);
   };
 
-  const navigateToRecipeDetail = (recipeId: number) => {
-    navigation.navigate('RecipeDetail', { recipeId });
+  const navigateToRecipeDetail = (recipeId: number, recipeTitle: string, imageUrl?: string) => {
+    navigation.navigate('RecipeDetail', { 
+      recipeId, 
+      recipeTitle,
+      imageUrl 
+    });
   };
 
   const navigateToRecipes = () => {
@@ -48,15 +52,27 @@ const HomeScreen = () => {
     navigation.navigate('ComprehensiveMealPlan', { mealPlan });
   };
 
-  // Function to get meal type based on current time
-  const getMealTypeForCurrentTime = () => {
-    const hour = new Date().getHours();
-    if (hour < 11) return 'Breakfast';
-    if (hour < 16) return 'Lunch';
-    return 'Dinner';
-  };
 
-  const currentMealType = getMealTypeForCurrentTime();
+
+  // Get current day and meal type
+  const today = new Date();
+  const currentHour = today.getHours();
+  let mealType = 'dinner';
+  let dayIndex = 0; // Default to Day 1
+  
+  // Determine meal type based on current time
+  if (currentHour < 11) {
+    mealType = 'breakfast';
+  } else if (currentHour < 16) {
+    mealType = 'lunch';
+  } else {
+    mealType = 'dinner';
+  }
+  
+  // For demo purposes, let's show Day 2 or Day 3 as requested
+  // In a real app, you'd calculate the actual day from the meal plan
+  const dayOfWeek = today.getDay();
+  dayIndex = (dayOfWeek + 1) % 7; // Simple day calculation, can be improved
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
@@ -106,7 +122,7 @@ const HomeScreen = () => {
 
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>
-            {`Today's ${currentMealType}`}
+            {`Day ${dayIndex + 1} ${mealType.charAt(0).toUpperCase() + mealType.slice(1)}`}
           </Text>
         </View>
 
@@ -127,18 +143,12 @@ const HomeScreen = () => {
               const comprehensivePlan = mealPlans.find(plan => plan.type === 'comprehensive');
               if (!comprehensivePlan || comprehensivePlan.type !== 'comprehensive') return null;
               
-              // Get today's meals from the comprehensive plan
-              const today = new Date();
-              const dayOfWeek = today.getDay();
-              const mondayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday = 0 index
+              // Ensure we have a valid day index
+              if (dayIndex >= comprehensivePlan.mealPlan.length) {
+                dayIndex = 0;
+              }
               
-              // Get current meal type based on time
-              const currentHour = today.getHours();
-              let mealType = 'dinner';
-              if (currentHour < 11) mealType = 'breakfast';
-              else if (currentHour < 16) mealType = 'lunch';
-              
-              const todayMeals = comprehensivePlan.mealPlan[mondayIndex];
+              const todayMeals = comprehensivePlan.mealPlan[dayIndex];
               if (!todayMeals) return null;
               
               const displayMeal = todayMeals[mealType as keyof typeof todayMeals];
@@ -162,7 +172,7 @@ const HomeScreen = () => {
                 <TouchableOpacity 
                   key="next-meal" 
                   style={styles.mealPlanCard}
-                  onPress={() => navigateToRecipeDetail(displayMealObj.id)}
+                  onPress={() => navigateToRecipeDetail(displayMealObj.id, displayMealObj.title, displayMealObj.image)}
                 >
                   {displayMealObj.image ? (
                     <Image 
@@ -184,7 +194,7 @@ const HomeScreen = () => {
                       
                       <View style={styles.mealBadge}>
                         <Text style={styles.mealBadgeText}>
-                          {currentMealType}
+                          {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
                         </Text>
                       </View>
                     </View>
@@ -233,7 +243,7 @@ const HomeScreen = () => {
                     
                     <TouchableOpacity 
                       style={styles.viewRecipeButton}
-                      onPress={() => navigateToRecipeDetail(displayMealObj.id)}
+                      onPress={() => navigateToRecipeDetail(displayMealObj.id, displayMealObj.title, displayMealObj.image)}
                     >
                       <Text style={styles.viewRecipeButtonText}>View Recipe</Text>
                       <Icon name="chevron-right" size={16} color="#5DB075" />
@@ -288,24 +298,8 @@ const HomeScreen = () => {
           </>
         )}
 
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>
-            Recommended Recipes
-          </Text>
-          <TouchableOpacity onPress={navigateToRecipes}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
 
-        <View style={[styles.emptyState, isDarkMode && styles.emptyStateDark]}>
-          <Icon name="chef-hat" size={50} color="#CCCCCC" />
-          <Text style={[styles.emptyStateText, isDarkMode && styles.textLightSecondary]}>
-            Recipes coming soon
-          </Text>
-          <Text style={[styles.emptyStateSubtext, isDarkMode && styles.textLightSecondary]}>
-            We're preparing some delicious recipes for you
-          </Text>
-        </View>
+    
       </ScrollView>
 
       <MealPlanModal

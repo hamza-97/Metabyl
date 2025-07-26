@@ -26,10 +26,14 @@ const WeeklyMealPlanScreen = () => {
   const { weeklyPlan } = route.params;
 
   const navigateToRecipeDetail = (meal: GeneratedMeal) => {
-    navigation.navigate('RecipeDetail', { recipeId: meal.id });
+    navigation.navigate('RecipeDetail', { 
+      recipeId: meal.id, 
+      recipeTitle: meal.title,
+      imageUrl: meal.image 
+    });
   };
 
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const days = ['day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day7'];
   const mealTypes = [
     { key: 'breakfast', name: 'Breakfast', time: '8:00 AM', icon: 'coffee' },
     { key: 'lunch', name: 'Lunch', time: '12:30 PM', icon: 'food-variant' },
@@ -73,11 +77,11 @@ const WeeklyMealPlanScreen = () => {
         Week of {startOfWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
       </Text>
       <View style={styles.calendarDays}>
-        {days.map((_, index) => {
+        {days.map((day, index) => {
           const date = new Date(startOfWeek);
           date.setDate(startOfWeek.getDate() + index);
           const isToday = date.toDateString() === today.toDateString();
-          const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+          const dayName = `Day ${index + 1}`;
           
           return (
             <View key={index} style={[styles.calendarDay, isToday && styles.calendarDayToday]}>
@@ -175,11 +179,7 @@ const WeeklyMealPlanScreen = () => {
         {days.map((day, dayIndex) => {
           const dayDate = new Date(startOfWeek);
           dayDate.setDate(startOfWeek.getDate() + dayIndex);
-          const dayTitle = dayDate.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            month: 'long', 
-            day: 'numeric' 
-          });
+          const dayTitle = `Day ${dayIndex + 1}`;
           const isToday = dayDate.toDateString() === today.toDateString();
           
           return (

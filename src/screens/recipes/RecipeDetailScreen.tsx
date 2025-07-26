@@ -287,22 +287,22 @@ const RecipeDetailScreen = () => {
     }
 
     // Remove HTML tags from instructions
-    const cleanInstructions = instructions?.replace(/<[^>]*>?/gm, '');
-    
-    // Split instructions by number or by periods followed by space
+    const cleanInstructions = instructions.replace(/<[^>]*>?/gm, '');
+
+    // Split instructions by numbered steps (e.g., 1. Step text 2. Step text ...)
+    // This regex will split before each number-dot-space, but keep the number
     const steps = cleanInstructions
-      .split(/\d+\.\s|\.\s/)
-      .filter(step => step.trim().length > 0);
+      .split(/(?=\d+\. )/)
+      .map(step => step.replace(/^\d+\.\s*/, '').trim())
+      .filter(step => step.length > 0);
 
     return (
       <View style={styles.instructionsList}>
         {steps.map((step, index) => (
           <View key={index} style={styles.instructionItem}>
-            <View style={styles.instructionNumber}>
-              <Text style={styles.instructionNumberText}>{index + 1}</Text>
-            </View>
+            <Text style={styles.instructionNumberText}>{index + 1}. </Text>
             <Text style={[styles.instructionText, isDarkMode && styles.textLight]}>
-              {step.trim()}
+              {step}
             </Text>
           </View>
         ))}
@@ -387,17 +387,199 @@ const RecipeDetailScreen = () => {
     );
   };
 
+  // Function to convert recipe measurements to grocery quantities
+  const convertToGroceryQuantity = (ingredient: LlmRecipeDetail['ingredients'][0], currentServings?: number) => {
+    const name = ingredient.name.toLowerCase();
+    const original = ingredient.original.toLowerCase();
+    const originalServings = recipe?.servings || 1;
+    const servingMultiplier = currentServings ? currentServings / originalServings : 1;
+    
+    // Check if it's a small measurement that should be converted
+    const isSmallMeasurement = original.includes('tablespoon') || original.includes('tbsp') || 
+                              original.includes('teaspoon') || original.includes('tsp') ||
+                              original.includes('pinch') || original.includes('dash') ||
+                              original.includes('clove') || original.includes('sprig');
+    
+    // Common conversions for grocery shopping
+    if (name.includes('milk') || name.includes('cream')) {
+      // Scale milk quantity based on servings
+      if (servingMultiplier > 4) return '2 gallons milk';
+      return '1 gallon milk';
+    }
+    if (name.includes('eggs')) {
+      // Scale eggs based on servings
+      const eggCount = Math.ceil(ingredient.amount * servingMultiplier);
+      if (eggCount > 12) return '2 dozen eggs';
+      return '1 dozen eggs';
+    }
+    if (name.includes('butter')) {
+      return '1 package butter';
+    }
+    if (name.includes('cheese')) {
+      return '1 package cheese';
+    }
+    if (name.includes('bread')) {
+      return '1 loaf bread';
+    }
+    if (name.includes('rice')) {
+      return '1 bag rice';
+    }
+    if (name.includes('pasta') || name.includes('noodle')) {
+      return '1 bag pasta';
+    }
+    if (name.includes('flour')) {
+      return '1 bag flour';
+    }
+    if (name.includes('sugar')) {
+      return '1 bag sugar';
+    }
+    if (name.includes('oil')) {
+      return '1 bottle cooking oil';
+    }
+    if (name.includes('salt')) {
+      return '1 container salt';
+    }
+    if (name.includes('pepper')) {
+      return '1 container black pepper';
+    }
+    if (name.includes('yogurt')) {
+      return '6 containers yogurt';
+    }
+    if (name.includes('tomato')) {
+      return '1 package tomatoes';
+    }
+    if (name.includes('onion')) {
+      return '1 bag onions';
+    }
+    if (name.includes('garlic')) {
+      return '1 package garlic';
+    }
+    if (name.includes('chicken')) {
+      return '1 package chicken';
+    }
+    if (name.includes('beef')) {
+      return '1 package beef';
+    }
+    if (name.includes('pork')) {
+      return '1 package pork';
+    }
+    if (name.includes('fish') || name.includes('salmon') || name.includes('tuna')) {
+      return '1 package fish';
+    }
+    if (name.includes('spinach') || name.includes('lettuce') || name.includes('greens')) {
+      return '1 package greens';
+    }
+    if (name.includes('carrot')) {
+      return '1 bag carrots';
+    }
+    if (name.includes('potato')) {
+      return '1 bag potatoes';
+    }
+    if (name.includes('apple')) {
+      return '1 bag apples';
+    }
+    if (name.includes('banana')) {
+      return '1 bunch bananas';
+    }
+    if (name.includes('lemon') || name.includes('lime')) {
+      return '1 bag citrus';
+    }
+    if (name.includes('mushroom')) {
+      return '1 package mushrooms';
+    }
+    if (name.includes('bell pepper') || name.includes('pepper')) {
+      return '1 bag bell peppers';
+    }
+    if (name.includes('cucumber')) {
+      return '1 package cucumbers';
+    }
+    if (name.includes('celery')) {
+      return '1 bunch celery';
+    }
+    if (name.includes('herbs') || name.includes('parsley') || name.includes('cilantro') || name.includes('basil')) {
+      return '1 package fresh herbs';
+    }
+    if (name.includes('spice') || name.includes('seasoning') || name.includes('cumin') || name.includes('paprika')) {
+      return '1 container spices';
+    }
+    if (name.includes('vinegar')) {
+      return '1 bottle vinegar';
+    }
+    if (name.includes('sauce') || name.includes('ketchup') || name.includes('mustard')) {
+      return '1 bottle sauce';
+    }
+    if (name.includes('broth') || name.includes('stock')) {
+      return '1 carton broth';
+    }
+    if (name.includes('beans') || name.includes('lentil')) {
+      return '1 bag dried beans';
+    }
+    if (name.includes('nuts') || name.includes('almond') || name.includes('walnut')) {
+      return '1 bag nuts';
+    }
+    
+    // If it's a small measurement, convert to container
+    if (isSmallMeasurement) {
+      return `1 container ${ingredient.name}`;
+    }
+    
+    // For anything else with small amounts, make it grocery-friendly
+    if (original.includes('cup') && (original.includes('1/4') || original.includes('1/2') || original.includes('1/3'))) {
+      return `1 package ${ingredient.name}`;
+    }
+    
+    return ingredient.original;
+  };
+
+  // Function to categorize ingredients
+  const categorizeIngredient = (ingredient: LlmRecipeDetail['ingredients'][0]) => {
+    const name = ingredient.name.toLowerCase();
+    
+    if (name.includes('milk') || name.includes('cream') || name.includes('cheese') || name.includes('yogurt') || name.includes('butter')) {
+      return 'Dairy';
+    }
+    if (name.includes('chicken') || name.includes('beef') || name.includes('pork') || name.includes('fish') || name.includes('eggs')) {
+      return 'Protein';
+    }
+    if (name.includes('tomato') || name.includes('onion') || name.includes('garlic') || name.includes('carrot') || 
+        name.includes('lettuce') || name.includes('spinach') || name.includes('apple') || name.includes('banana') ||
+        name.includes('lemon') || name.includes('lime') || name.includes('mushroom') || name.includes('pepper') ||
+        name.includes('cucumber') || name.includes('celery') || name.includes('herbs') || name.includes('parsley') ||
+        name.includes('cilantro') || name.includes('basil') || name.includes('potato') || name.includes('greens')) {
+      return 'Produce';
+    }
+    if (name.includes('rice') || name.includes('pasta') || name.includes('noodle') || name.includes('bread') || 
+        name.includes('flour') || name.includes('sugar')) {
+      return 'Grains';
+    }
+    if (name.includes('oil') || name.includes('vinegar') || name.includes('sauce') || name.includes('ketchup') ||
+        name.includes('mustard') || name.includes('broth') || name.includes('stock') || name.includes('salt') ||
+        name.includes('pepper') || name.includes('spice') || name.includes('seasoning') || name.includes('cumin') ||
+        name.includes('paprika')) {
+      return 'Pantry';
+    }
+    if (name.includes('beans') || name.includes('lentil') || name.includes('nuts') || name.includes('almond') ||
+        name.includes('walnut')) {
+      return 'Pantry';
+    }
+    
+    return 'Other';
+  };
+
   // Function to render grocery list (shopping items)
   const renderGroceryList = (ingredients?: LlmRecipeDetail['ingredients']) => {
-    if (!ingredients || ingredients.length === 0) {
+    // Use scaledIngredients if available, otherwise fall back to original ingredients
+    const ingredientsToUse = scaledIngredients.length > 0 ? scaledIngredients : ingredients;
+    
+    if (!ingredientsToUse || ingredientsToUse.length === 0) {
       return <Text style={[styles.noDataText, isDarkMode && styles.textLight]}>No ingredients information available</Text>;
     }
 
-    // Convert ingredients to shopping list format with categories
-    const shoppingItems = ingredients.map((ingredient) => ({
+    // Convert ingredients to shopping list format with proper grocery quantities
+    const shoppingItems = ingredientsToUse.map((ingredient) => ({
       name: ingredient.name,
-      quantity: ingredient.original,
-      category: 'Ingredients', // Default category
+      quantity: convertToGroceryQuantity(ingredient, servings),
+      category: categorizeIngredient(ingredient),
     }));
 
     // Group by category (for now, all items are in 'Ingredients' category)
@@ -425,9 +607,10 @@ const RecipeDetailScreen = () => {
               {category}
             </Text>
             {shoppingItems
+              .map((item, originalIndex) => ({ ...item, originalIndex }))
               .filter(item => item.category === category)
-              .map((item, index) => (
-                <View key={index} style={[styles.shoppingItem, isDarkMode && styles.shoppingItemDark]}>
+              .map((item) => (
+                <View key={item.originalIndex} style={[styles.shoppingItem, isDarkMode && styles.shoppingItemDark]}>
                   <View style={styles.shoppingItemContent}>
                     <Text style={[styles.shoppingItemName, isDarkMode && styles.textLight]}>
                       {item.name}
@@ -438,10 +621,10 @@ const RecipeDetailScreen = () => {
                   </View>
                   <TouchableOpacity 
                     style={styles.checkbox}
-                    onPress={() => toggleIngredient(index)}
+                    onPress={() => toggleIngredient(item.originalIndex)}
                   >
                     <Icon 
-                      name={selectedIngredients[index] ? "checkbox-marked" : "checkbox-blank-outline"} 
+                      name={selectedIngredients[item.originalIndex] ? "checkbox-marked" : "checkbox-blank-outline"} 
                       size={20} 
                       color="#5DB075" 
                     />
@@ -891,28 +1074,22 @@ const styles = StyleSheet.create({
   instructionItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 15,
-  },
-  instructionNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#5DB075',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    marginTop: 2,
+    marginBottom: 12,
+    paddingHorizontal: 5,
   },
   instructionNumberText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#5DB075',
+    marginRight: 8,
+    minWidth: 20,
   },
   instructionText: {
     fontSize: 15,
     color: '#333333',
-    flex: 1,
     lineHeight: 22,
+    fontWeight: '400',
+    flex: 1,
   },
   sourceContainer: {
     marginTop: 20,

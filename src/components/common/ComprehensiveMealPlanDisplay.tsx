@@ -20,7 +20,7 @@ export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan, onReci
   const isDarkMode = useColorScheme() === 'dark';
   const [activeTab, setActiveTab] = useState<'meals' | 'nutrition' | 'shopping'>('meals');
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const days = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
   const mealTypes = [
     { key: 'breakfast', name: 'Breakfast', icon: 'coffee', color: '#FF6B6B' },
     { key: 'lunch', name: 'Lunch', icon: 'food-variant', color: '#4ECDC4' },
