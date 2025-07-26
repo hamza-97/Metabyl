@@ -7,12 +7,12 @@ import {
   ScrollView,
   useColorScheme,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { RootStackParamList } from '../../navigation';
 import { useUserStore } from '../../store/userStore';
+import OnboardingScreenWrapper from '../../components/common/OnboardingScreenWrapper';
 
 type DietOption = {
   id: string;
@@ -79,11 +79,9 @@ const DietaryPreferencesScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
-      {/* Green Header */}
-      <View style={styles.greenHeader}>
-        <Text style={styles.greenHeaderText}>Metabyl</Text>
-      </View>
+    <OnboardingScreenWrapper>
+      <View style={[styles.container, isDarkMode && styles.containerDark]}>
+
 
       <View style={styles.header}>
         <Text style={[styles.title, isDarkMode && styles.textLight]}>
@@ -136,7 +134,8 @@ const DietaryPreferencesScreen = () => {
           <Text style={styles.nextButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+      </View>
+    </OnboardingScreenWrapper>
   );
 };
 

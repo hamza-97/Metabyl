@@ -6,13 +6,13 @@ import {
   TouchableOpacity,
   useColorScheme,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Slider from '@react-native-community/slider';
 import { RootStackParamList } from '../../navigation';
 import { useQuestionnaireStore } from '../../store/questionnaireStore';
+import OnboardingScreenWrapper from '../../components/common/OnboardingScreenWrapper';
 
 type HouseholdSetupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -53,7 +53,8 @@ export const HouseholdSetupScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
+    <OnboardingScreenWrapper>
+      <View style={[styles.container, isDarkMode && styles.containerDark]}>
 
 
       <View style={styles.header}>
@@ -162,7 +163,8 @@ export const HouseholdSetupScreen: React.FC = () => {
           <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+      </View>
+    </OnboardingScreenWrapper>
   );
 };
 

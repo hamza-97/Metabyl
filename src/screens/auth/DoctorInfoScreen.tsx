@@ -5,8 +5,8 @@ import {
   StyleSheet,
   useColorScheme,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
+  SafeAreaView,
   Image,
   ScrollView,
 } from 'react-native';
@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation';
+import OnboardingScreenWrapper from '../../components/common/OnboardingScreenWrapper';
 
 type DoctorInfoNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -31,10 +32,9 @@ const DoctorInfoScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
-      <StatusBar 
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
-        backgroundColor={isDarkMode ? '#121212' : '#FFFFFF'} 
-      />
+    <OnboardingScreenWrapper>
+      <View style={[styles.container, isDarkMode && styles.containerDark]}>
+
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerSection}>
@@ -155,6 +155,8 @@ const DoctorInfoScreen = () => {
           <Icon name="chevron-right" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
+      </View>
+    </OnboardingScreenWrapper>
     </SafeAreaView>
   );
 };

@@ -47,10 +47,7 @@ const AllergiesScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
-      {/* Green Header */}
-      <View style={styles.greenHeader}>
-        <Text style={styles.greenHeaderText}>Metabyl</Text>
-      </View>
+
 
       <View style={styles.header}>
         <Text style={[styles.title, isDarkMode && styles.textLight]}>

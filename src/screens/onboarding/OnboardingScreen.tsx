@@ -13,6 +13,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { RootStackParamList } from '../../navigation';
+import OnboardingProgressBar from '../../components/common/OnboardingProgressBar';
+import { useOnboardingProgress } from '../../hooks/useOnboardingProgress';
 
 const { width, height } = Dimensions.get('window');
 

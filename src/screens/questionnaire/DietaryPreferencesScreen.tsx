@@ -28,6 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { clamp } from 'react-native-redash';
+import OnboardingScreenWrapper from '../../components/common/OnboardingScreenWrapper';
 
 type DietaryPreferencesScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -177,6 +178,7 @@ export const DietaryPreferencesScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
+      <OnboardingScreenWrapper>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -318,6 +320,7 @@ export const DietaryPreferencesScreen: React.FC = () => {
           <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
+      </OnboardingScreenWrapper>
     </SafeAreaView>
   );
 };
@@ -332,7 +335,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#121212',
   },
   header: {
-    marginTop: 20,
     marginBottom: 30,
   },
   backButton: {

@@ -6,14 +6,15 @@ import {
   TouchableOpacity,
   useColorScheme,
   ScrollView,
+  SafeAreaView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { RootStackParamList } from '../../navigation';
 import { useQuestionnaireStore } from '../../store/questionnaireStore';
 import { CookingSkillLevel, CookingTime, WeeklyPrepTime } from '../../types/questionnaire';
+import OnboardingScreenWrapper from '../../components/common/OnboardingScreenWrapper';
 
 type CookingSkillScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -59,6 +60,8 @@ export const CookingSkillScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
+    <OnboardingScreenWrapper>
+      <View style={[styles.container, isDarkMode && styles.containerDark]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -297,6 +300,8 @@ export const CookingSkillScreen: React.FC = () => {
           <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
+      </View>
+    </OnboardingScreenWrapper>
     </SafeAreaView>
   );
 };
@@ -311,7 +316,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#121212',
   },
   header: {
-    marginTop: 20,
     marginBottom: 30,
   },
   backButton: {

@@ -115,10 +115,6 @@ const PaywallScreen = () => {
 
         
         <ScrollView contentContainerStyle={styles.safeArea}>
-          {/* Green Header */}
-          <View style={styles.greenHeader}>
-            <Text style={styles.greenHeaderText}>Metabyl</Text>
-          </View>
 
           {/* Close Button */}
           <TouchableOpacity style={styles.closeButton} onPress={handleContinueFree}>

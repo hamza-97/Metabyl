@@ -59,10 +59,7 @@ const SplashScreen = () => {
 
   return (
     <View style={[styles.container, isDarkMode && styles.containerDark]}>
-      {/* Green Header */}
-      <View style={styles.greenHeader}>
-        <Text style={styles.greenHeaderText}>Metabyl</Text>
-      </View>
+
 
       <View style={styles.logoContainer}>
         <Image source={require("../../../assets/img/logo.png")} style={styles.logoStyle} />

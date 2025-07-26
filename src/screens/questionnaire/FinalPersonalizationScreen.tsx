@@ -6,14 +6,15 @@ import {
   TouchableOpacity,
   useColorScheme,
   ScrollView,
+  SafeAreaView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { RootStackParamList } from '../../navigation';
 import { useQuestionnaireStore } from '../../store/questionnaireStore';
 import { CookingEquipment, CulturalStyle } from '../../types/questionnaire';
+import OnboardingScreenWrapper from '../../components/common/OnboardingScreenWrapper';
 
 type FinalPersonalizationScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -80,6 +81,8 @@ export const FinalPersonalizationScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
+  <OnboardingScreenWrapper>
+      <View style={[styles.container, isDarkMode && styles.containerDark]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -197,6 +200,8 @@ export const FinalPersonalizationScreen: React.FC = () => {
           <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
+      </View>
+    </OnboardingScreenWrapper>
     </SafeAreaView>
   );
 };
