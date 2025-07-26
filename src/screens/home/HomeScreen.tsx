@@ -76,12 +76,12 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <Text style={[styles.headerTitle, isDarkMode && styles.textLight]}>Metabyl</Text>
         <TouchableOpacity style={styles.profileButton}>
           <Icon name="account-circle" size={30} color={isDarkMode ? '#FFFFFF' : '#333333'} />
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.welcomeSection}>
@@ -102,7 +102,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
 
         {/* Chatbot Access Card */}
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
           style={[styles.chatbotCard, isDarkMode && styles.chatbotCardDark]}
           onPress={() => navigation.navigate('ChatBot')}
         >
@@ -118,7 +118,7 @@ const HomeScreen = () => {
             </Text>
           </View>
           <Icon name="chevron-right" size={20} color="#007AFF" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, isDarkMode && styles.textLight]}>

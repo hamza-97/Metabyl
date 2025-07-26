@@ -48,13 +48,13 @@ const MainTabNavigator = () => {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Recipes" component={RecipesScreen} />
       <Tab.Screen name="ShoppingList" component={ShoppingListScreen} />
-      <Tab.Screen 
+      {/* <Tab.Screen 
         name="ChatBot" 
         component={ChatbotScreen}
         options={{
           tabBarLabel: 'Food AI',
         }}
-      />
+      /> */}
       <Tab.Screen 
         name="Profile" 
         component={ProfileScreen}

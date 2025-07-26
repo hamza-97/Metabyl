@@ -95,8 +95,8 @@ const RecipesScreen = () => {
         }
       } else {
         const response = await spoonacularAPI.getRandomRecipes({ number: 10 });
-        setRecipes(response.recipes);
-        
+        // setRecipes(response.recipes);
+        console.log("receipies are ", response)
         // Sort by health score if "Healthy" filter is selected
         if (selectedFilter === 'Healthy') {
           const sortedRecipes = [...response.recipes].sort(
@@ -118,14 +118,14 @@ const RecipesScreen = () => {
     fetchRecipes();
   }, [fetchRecipes]);
 
-  const handleRecipePress = (recipeId: number) => {
-    navigation.navigate('RecipeDetail', { recipeId });
+  const handleRecipePress = (recipeId: number,recipeTitle: string) => {
+    navigation.navigate('RecipeDetail', { recipeId, recipeTitle });
   };
 
   const renderRecipeItem = ({ item }: { item: Recipe }) => (
     <TouchableOpacity 
       style={[styles.recipeCard, isDarkMode && styles.recipeCardDark]} 
-      onPress={() => handleRecipePress(item.id)}
+      onPress={() => handleRecipePress(item.id,item.title)}
     >
       {item.image && (
         <Image source={{ uri: item.image }} style={styles.recipeImage} />
@@ -135,8 +135,7 @@ const RecipesScreen = () => {
           {item.title}
         </Text>
         
-        {/* Health score indicator */}
-        {item.healthScore && (
+         {item.healthScore && (
           <View style={styles.healthScoreContainer}>
             <Text style={styles.healthScoreLabel}>Health Score:</Text>
             <View style={styles.healthScoreBar}>
@@ -150,10 +149,9 @@ const RecipesScreen = () => {
                   }
                 ]} 
               />
-              <Text style={styles.healthScoreText}>{item.healthScore}</Text>
             </View>
           </View>
-        )}
+        )} 
         
         <View style={styles.recipeMetaInfo}>
           <View style={styles.metaItem}>
@@ -170,7 +168,6 @@ const RecipesScreen = () => {
           </View>
         </View>
         
-        {/* Dietary tags */}
         {(item.diets && item.diets.length > 0) || item.vegetarian || item.vegan || item.glutenFree ? (
           <View style={styles.dietTagsContainer}>
             {item.vegetarian && (
@@ -258,13 +255,14 @@ const RecipesScreen = () => {
           </TouchableOpacity>
         </View>
       ) : (
+        // <View />
         <FlatList
           data={recipes}
           renderItem={renderRecipeItem}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.recipeList}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
+          // ListEmptyComponent={renderEmptyState}
         />
       )}
     </SafeAreaView>

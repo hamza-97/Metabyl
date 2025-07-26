@@ -82,12 +82,12 @@ const ShoppingListScreen = () => {
               <Icon name="checkbox-marked-outline" size={24} color={isDarkMode ? '#FFFFFF' : '#333333'} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             style={styles.headerButton}
             onPress={() => navigation.navigate('Recipes' as never)}
           >
             <Icon name="plus" size={24} color={isDarkMode ? '#FFFFFF' : '#333333'} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {items.length > 0 && (
             <TouchableOpacity 
               style={styles.headerButton}
