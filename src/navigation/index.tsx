@@ -50,7 +50,7 @@ export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
   MainApp: undefined;
-  RecipeDetail: { recipeId: number };
+  RecipeDetail: { recipeId: number; recipeTitle: string; imageUrl?: string };
   WeeklyMealPlan: { weeklyPlan: import('../types/mealPlan').WeeklyMealPlan };
   ComprehensiveMealPlan: { mealPlan: import('../types/mealPlan').ComprehensiveMealPlan };
   Chatbot: undefined;

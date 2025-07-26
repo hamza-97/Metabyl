@@ -13,9 +13,10 @@ import { ComprehensiveMealPlan, Meal, DailyPlan } from '../../types/mealPlan';
 
 interface Props {
   mealPlan: ComprehensiveMealPlan;
+  onRecipePress?: (meal: Meal, mealType: string, dayIndex: number) => void;
 }
 
-export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
+export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan, onRecipePress }) => {
   const isDarkMode = useColorScheme() === 'dark';
   const [activeTab, setActiveTab] = useState<'meals' | 'nutrition' | 'shopping'>('meals');
 
@@ -26,10 +27,10 @@ export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
     { key: 'dinner', name: 'Dinner', icon: 'silverware-fork-knife', color: '#45B7D1' },
   ];
 
-  const renderMealCard = (meal: Meal, mealType: string) => {
+  const renderMealCard = (meal: Meal, mealType: string, dayIndex: number) => {
     const mealInfo = mealTypes.find(mt => mt.key === mealType);
-    
-    return (
+    const clickable = typeof onRecipePress === 'function';
+    const cardContent = (
       <View key={`${mealType}-${meal.name}`} style={[styles.mealCard, isDarkMode && styles.mealCardDark]}>
         {meal.imageUrl && (
           <Image 
@@ -38,25 +39,19 @@ export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
             resizeMode="cover"
           />
         )}
-        
         <View style={styles.mealContent}>
           <View style={styles.mealHeader}>
-            <View style={[styles.mealTypeBadge, { backgroundColor: mealInfo?.color + '20' }]}>
+            <View style={[styles.mealTypeBadge, { backgroundColor: mealInfo?.color + '20' }]}> 
               <Icon name={mealInfo?.icon || 'food'} size={16} color={mealInfo?.color} />
-              <Text style={[styles.mealTypeText, { color: mealInfo?.color }]}>
-                {mealInfo?.name}
-              </Text>
+              <Text style={[styles.mealTypeText, { color: mealInfo?.color }]}> {mealInfo?.name} </Text>
             </View>
           </View>
-          
           <Text style={[styles.mealName, isDarkMode && styles.textLight]} numberOfLines={2}>
             {meal.name}
           </Text>
-          
           <Text style={[styles.mealDescription, isDarkMode && styles.textLightSecondary]} numberOfLines={2}>
             {meal.description}
           </Text>
-          
           <View style={styles.nutritionRow}>
             <View style={styles.nutritionItem}>
               <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Calories</Text>
@@ -83,7 +78,6 @@ export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
               </Text>
             </View>
           </View>
-          
           {meal.ingredients.length > 0 && (
             <View style={styles.ingredientsContainer}>
               <Text style={[styles.ingredientsTitle, isDarkMode && styles.textLight]}>
@@ -98,6 +92,14 @@ export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
         </View>
       </View>
     );
+    if (clickable) {
+      return (
+        <TouchableOpacity key={`${mealType}-${meal.name}`} activeOpacity={0.8} onPress={() => onRecipePress(meal, mealType, dayIndex)}>
+          {cardContent}
+        </TouchableOpacity>
+      );
+    }
+    return cardContent;
   };
 
   const renderDailyPlan = (dailyPlan: DailyPlan, dayIndex: number) => (
@@ -108,7 +110,7 @@ export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
       <View style={styles.mealsContainer}>
         {mealTypes.map(({ key }) => {
           const meal = dailyPlan[key as keyof DailyPlan];
-          return meal ? renderMealCard(meal, key) : null;
+          return meal ? renderMealCard(meal, key, dayIndex) : null;
         })}
       </View>
     </View>

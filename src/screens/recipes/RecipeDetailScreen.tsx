@@ -132,7 +132,7 @@ const RecipeDetailScreen = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const navigation = useNavigation();
   const route = useRoute<RecipeDetailScreenRouteProp>();
-  const { recipeId } = route.params;
+  const { recipeId, recipeTitle, imageUrl } = route.params;
   
   const [recipe, setRecipe] = useState<LlmRecipeDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -152,9 +152,13 @@ const RecipeDetailScreen = () => {
       try {
         setLoading(true);
         
-        // Generate recipe details using Gemini
-        const recipeTitle = `Recipe ${recipeId}`; // You can pass actual title from navigation
+        // Use the recipe title passed from navigation
         const recipeDetail = await GeminiService.generateRecipeDetail(recipeId, recipeTitle);
+        
+        // Set the image from navigation params if available
+        if (imageUrl) {
+          recipeDetail.image = imageUrl;
+        }
         
         setRecipe(recipeDetail);
         setServings(recipeDetail.servings || 1);
@@ -168,7 +172,7 @@ const RecipeDetailScreen = () => {
     };
 
     fetchRecipeDetails();
-  }, [recipeId]);
+  }, [recipeId, recipeTitle, imageUrl]);
 
   // Function to adjust servings and scale ingredients
   const adjustServings = (newServings: number) => {
@@ -389,18 +393,22 @@ const RecipeDetailScreen = () => {
       return <Text style={[styles.noDataText, isDarkMode && styles.textLight]}>No ingredients information available</Text>;
     }
 
-    // Group ingredients by aisle or category if available
-    const groceryItems = ingredients.map((ingredient) => ({
+    // Convert ingredients to shopping list format with categories
+    const shoppingItems = ingredients.map((ingredient) => ({
       name: ingredient.name,
-      amount: ingredient.amount,
-      unit: ingredient.unit,
-      original: ingredient.original,
+      quantity: ingredient.original,
+      category: 'Ingredients', // Default category
     }));
 
+    // Group by category (for now, all items are in 'Ingredients' category)
+    const categories = [...new Set(shoppingItems.map(item => item.category))];
+    
     return (
       <View style={styles.groceryListContainer}>
         <View style={styles.groceryHeader}>
-          <Text style={[styles.groceryListTitle, isDarkMode && styles.textLight]}>Shopping List</Text>
+          <Text style={[styles.groceryListTitle, isDarkMode && styles.textLight]}>
+            Shopping List ({shoppingItems.length} items)
+          </Text>
           <TouchableOpacity 
             style={styles.selectAllButton}
             onPress={toggleAllIngredients}
@@ -411,32 +419,37 @@ const RecipeDetailScreen = () => {
           </TouchableOpacity>
         </View>
         
-        <View style={styles.groceryList}>
-          {groceryItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.groceryItem}
-              onPress={() => toggleIngredient(index)}
-              activeOpacity={0.7}
-            >
-              <View style={[
-                styles.groceryCheckbox,
-                selectedIngredients[index] && styles.groceryCheckboxChecked
-              ]}>
-                {selectedIngredients[index] && (
-                  <Icon name="check" size={16} color="#FFFFFF" />
-                )}
-              </View>
-              <Text style={[
-                styles.groceryItemText, 
-                isDarkMode && styles.textLight,
-                selectedIngredients[index] && styles.groceryItemTextChecked
-              ]}>
-                {item.original}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {categories.map(category => (
+          <View key={category} style={styles.categoryContainer}>
+            <Text style={[styles.categoryTitle, isDarkMode && styles.textLight]}>
+              {category}
+            </Text>
+            {shoppingItems
+              .filter(item => item.category === category)
+              .map((item, index) => (
+                <View key={index} style={[styles.shoppingItem, isDarkMode && styles.shoppingItemDark]}>
+                  <View style={styles.shoppingItemContent}>
+                    <Text style={[styles.shoppingItemName, isDarkMode && styles.textLight]}>
+                      {item.name}
+                    </Text>
+                    <Text style={[styles.shoppingItemQuantity, isDarkMode && styles.textLightSecondary]}>
+                      {item.quantity}
+                    </Text>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.checkbox}
+                    onPress={() => toggleIngredient(index)}
+                  >
+                    <Icon 
+                      name={selectedIngredients[index] ? "checkbox-marked" : "checkbox-blank-outline"} 
+                      size={20} 
+                      color="#5DB075" 
+                    />
+                  </TouchableOpacity>
+                </View>
+              ))}
+          </View>
+        ))}
         
         <TouchableOpacity 
           style={styles.addToListButton}
@@ -1084,13 +1097,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: 12,
-    marginTop: 20,
+    marginTop: 15,
   },
   addToListButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  categoryContainer: {
+    marginBottom: 15,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 10,
+  },
+  shoppingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 8,
+  },
+  shoppingItemDark: {
+    backgroundColor: '#2A2A2A',
+  },
+  shoppingItemContent: {
+    flex: 1,
+  },
+  shoppingItemName: {
+    fontSize: 16,
+    color: '#333333',
+    fontWeight: '500',
+  },
+  shoppingItemQuantity: {
+    fontSize: 14,
+    color: '#666666',
+    marginTop: 2,
+  },
+  checkbox: {
+    padding: 5,
   },
 });
 
