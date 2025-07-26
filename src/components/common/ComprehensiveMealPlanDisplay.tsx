@@ -6,6 +6,7 @@ import {
   useColorScheme,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ComprehensiveMealPlan, Meal, DailyPlan } from '../../types/mealPlan';
@@ -30,61 +31,71 @@ export const ComprehensiveMealPlanDisplay: React.FC<Props> = ({ mealPlan }) => {
     
     return (
       <View key={`${mealType}-${meal.name}`} style={[styles.mealCard, isDarkMode && styles.mealCardDark]}>
-        <View style={styles.mealHeader}>
-          <View style={[styles.mealTypeBadge, { backgroundColor: mealInfo?.color + '20' }]}>
-            <Icon name={mealInfo?.icon || 'food'} size={16} color={mealInfo?.color} />
-            <Text style={[styles.mealTypeText, { color: mealInfo?.color }]}>
-              {mealInfo?.name}
-            </Text>
-          </View>
-        </View>
-        
-        <Text style={[styles.mealName, isDarkMode && styles.textLight]} numberOfLines={2}>
-          {meal.name}
-        </Text>
-        
-        <Text style={[styles.mealDescription, isDarkMode && styles.textLightSecondary]} numberOfLines={2}>
-          {meal.description}
-        </Text>
-        
-        <View style={styles.nutritionRow}>
-          <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Calories</Text>
-            <Text style={[styles.nutritionValue, isDarkMode && styles.textLight]}>
-              {meal.nutritionalInfo.calories}
-            </Text>
-          </View>
-          <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Protein</Text>
-            <Text style={[styles.nutritionValue, isDarkMode && styles.textLight]}>
-              {meal.nutritionalInfo.protein}
-            </Text>
-          </View>
-          <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Carbs</Text>
-            <Text style={[styles.nutritionValue, isDarkMode && styles.textLight]}>
-              {meal.nutritionalInfo.carbohydrates}
-            </Text>
-          </View>
-          <View style={styles.nutritionItem}>
-            <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Fat</Text>
-            <Text style={[styles.nutritionValue, isDarkMode && styles.textLight]}>
-              {meal.nutritionalInfo.fat}
-            </Text>
-          </View>
-        </View>
-        
-        {meal.ingredients.length > 0 && (
-          <View style={styles.ingredientsContainer}>
-            <Text style={[styles.ingredientsTitle, isDarkMode && styles.textLight]}>
-              Key Ingredients:
-            </Text>
-            <Text style={[styles.ingredientsText, isDarkMode && styles.textLightSecondary]} numberOfLines={2}>
-              {meal.ingredients.slice(0, 3).map(ing => ing.name).join(', ')}
-              {meal.ingredients.length > 3 && '...'}
-            </Text>
-          </View>
+        {meal.imageUrl && (
+          <Image 
+            source={{ uri: meal.imageUrl }} 
+            style={styles.mealImage}
+            resizeMode="cover"
+          />
         )}
+        
+        <View style={styles.mealContent}>
+          <View style={styles.mealHeader}>
+            <View style={[styles.mealTypeBadge, { backgroundColor: mealInfo?.color + '20' }]}>
+              <Icon name={mealInfo?.icon || 'food'} size={16} color={mealInfo?.color} />
+              <Text style={[styles.mealTypeText, { color: mealInfo?.color }]}>
+                {mealInfo?.name}
+              </Text>
+            </View>
+          </View>
+          
+          <Text style={[styles.mealName, isDarkMode && styles.textLight]} numberOfLines={2}>
+            {meal.name}
+          </Text>
+          
+          <Text style={[styles.mealDescription, isDarkMode && styles.textLightSecondary]} numberOfLines={2}>
+            {meal.description}
+          </Text>
+          
+          <View style={styles.nutritionRow}>
+            <View style={styles.nutritionItem}>
+              <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Calories</Text>
+              <Text style={[styles.nutritionValue, isDarkMode && styles.textLight]}>
+                {meal.nutritionalInfo.calories}
+              </Text>
+            </View>
+            <View style={styles.nutritionItem}>
+              <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Protein</Text>
+              <Text style={[styles.nutritionValue, isDarkMode && styles.textLight]}>
+                {meal.nutritionalInfo.protein}
+              </Text>
+            </View>
+            <View style={styles.nutritionItem}>
+              <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Carbs</Text>
+              <Text style={[styles.nutritionValue, isDarkMode && styles.textLight]}>
+                {meal.nutritionalInfo.carbohydrates}
+              </Text>
+            </View>
+            <View style={styles.nutritionItem}>
+              <Text style={[styles.nutritionLabel, isDarkMode && styles.textLightSecondary]}>Fat</Text>
+              <Text style={[styles.nutritionValue, isDarkMode && styles.textLight]}>
+                {meal.nutritionalInfo.fat}
+              </Text>
+            </View>
+          </View>
+          
+          {meal.ingredients.length > 0 && (
+            <View style={styles.ingredientsContainer}>
+              <Text style={[styles.ingredientsTitle, isDarkMode && styles.textLight]}>
+                Key Ingredients:
+              </Text>
+              <Text style={[styles.ingredientsText, isDarkMode && styles.textLightSecondary]} numberOfLines={2}>
+                {meal.ingredients.slice(0, 3).map(ing => ing.name).join(', ')}
+                {meal.ingredients.length > 3 && '...'}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
     );
   };
@@ -338,6 +349,15 @@ const styles = StyleSheet.create({
   },
   mealCardDark: {
     backgroundColor: '#2A2A2A',
+  },
+  mealImage: {
+    width: '100%',
+    height: 120,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  mealContent: {
+    padding: 16,
   },
   mealHeader: {
     marginBottom: 12,

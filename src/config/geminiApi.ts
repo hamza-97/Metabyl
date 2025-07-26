@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import ImageGenerationService from './imageGenerationApi';
 
 // Initialize Gemini API
-
-const genAI = new GoogleGenerativeAI(getGeminiApiKey());
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_KEY || '');
 
 export interface MealPlanInput {
   dietaryRequirements: string;
@@ -106,6 +106,36 @@ export class GeminiService {
 
       // Parse the JSON response
       const parsed = JSON.parse(jsonMatch[0]);
+
+      // Generate images for all meals in parallel
+      const allMeals: Meal[] = [];
+      parsed.mealPlan.forEach((dailyPlan: DailyPlan) => {
+        allMeals.push(dailyPlan.breakfast, dailyPlan.lunch, dailyPlan.dinner);
+      });
+
+      try {
+        console.log('Generating images for', allMeals.length, 'meals...');
+        const imageUrls =
+          await ImageGenerationService.generateImagesForMealPlan(allMeals);
+
+        // Assign images to meals
+        parsed.mealPlan.forEach((dailyPlan: DailyPlan) => {
+          dailyPlan.breakfast.imageUrl =
+            imageUrls.get(dailyPlan.breakfast.name) || '';
+          dailyPlan.lunch.imageUrl = imageUrls.get(dailyPlan.lunch.name) || '';
+          dailyPlan.dinner.imageUrl =
+            imageUrls.get(dailyPlan.dinner.name) || '';
+        });
+
+        console.log('Successfully generated', imageUrls.size, 'images');
+      } catch (imageError) {
+        console.warn(
+          'Image generation failed, continuing without images:',
+          imageError,
+        );
+        // Continue without images if generation fails
+      }
+
       return parsed;
     } catch (error) {
       console.error('Failed to generate meal plan:', error);
